@@ -1,0 +1,119 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    String           @id @default(cuid())
+  email                 String           @unique
+  password              String?
+  firstName             String
+  lastName              String
+  fullName              String?
+  profilePicture        String?
+  bio                   String?
+  phone                 String?
+  location              String?
+  website               String?
+  linkedin              String?
+  twitter               String?
+  instagram             String?
+  googleId              String?          @unique
+  isGoogleUser          Boolean          @default(false)
+  isEmailVerified       Boolean          @default(false)
+  isActive              Boolean          @default(true)
+  emailVerifiedAt       DateTime?
+  subscriptionStatus    String           @default("FREE")
+  subscriptionStartDate DateTime?
+  subscriptionEndDate   DateTime?
+  emailNotifications    Boolean          @default(true)
+  pushNotifications     Boolean          @default(true)
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+  lastLoginAt           DateTime?
+  events                Event[]
+  paymentHistory        PaymentHistory[]
+  userTopics            UserTopic[]
+
+  @@map("users")
+}
+
+model Event {
+  id                  String   @id @default(cuid())
+  title               String
+  description         String?
+  date                DateTime
+  dateTime            String?  // For scraped events with raw date/time text
+  location            String?
+  venue               String?  // Venue name for scraped events
+  status              String   @default("UPCOMING")
+  maxParticipants     Int      @default(0)
+  currentParticipants Int      @default(0)
+  price               Float    @default(0)
+  priceDisplay        String?  // Display text for price (e.g., "Free", "From $25")
+  imageUrl            String?
+  eventUrl            String?  // Original event URL for scraped events
+  category            String?  // Event category/tags
+  source              String?  // Source of the event (e.g., "Eventbrite", "Manual")
+  sourceId            String?  // ID from the source platform
+  city                String?  // City for scraped events
+  state               String?  // State for scraped events
+  country             String?  // Country for scraped events
+  scrapedAt           DateTime? // When the event was scraped
+  metadata            Json?    // Additional metadata for scraped events
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  topicId             String?
+  userId              String?
+  topic               Topic?   @relation(fields: [topicId], references: [id])
+  user                User?    @relation(fields: [userId], references: [id])
+
+  @@map("events")
+}
+
+model Topic {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  description String?
+  color       String?
+  icon        String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  events      Event[]
+  userTopics  UserTopic[]
+
+  @@map("topics")
+}
+
+model UserTopic {
+  id       String @id @default(cuid())
+  userId   String
+  topicId  String
+  priority Int    @default(1)
+  topic    Topic  @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, topicId])
+  @@map("user_topics")
+}
+
+model PaymentHistory {
+  id                    String   @id @default(cuid())
+  paidDate              DateTime @default(now())
+  type                  String
+  amount                Int
+  status                String
+  currency              String   @default("USD")
+  stripePaymentIntentId String?
+  stripeCustomerId      String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  userId                String
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("payment_history")
+}
