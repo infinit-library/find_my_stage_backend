@@ -79,26 +79,16 @@ router.post('/signup', async (req, res) => {
 
     const user = await UserModel.create(userData);
 
-    // Generate JWT tokens
-    const accessToken = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-    );
-
-    const refreshToken = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_REFRESH_SECRET,
-      { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d' }
-    );
-
     res.status(201).json({
       success: true,
-      message: 'User created successfully',
+      message: 'User created successfully. Please sign in to continue.',
       data: {
-        user,
-        token: accessToken,
-        refreshToken
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName
+        }
       }
     });
 
