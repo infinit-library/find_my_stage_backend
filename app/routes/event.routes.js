@@ -7,6 +7,7 @@ const router = express.Router();
 // Public routes (no auth required)
 router.get('/', optionalAuthMiddleware, EventController.getEvents);
 router.get('/upcoming', optionalAuthMiddleware, EventController.getUpcomingEvents);
+router.get('/limited', optionalAuthMiddleware, EventController.getLimitedEvents);
 router.get('/:id', optionalAuthMiddleware, EventController.getEventById);
 
 // Protected routes (auth required)

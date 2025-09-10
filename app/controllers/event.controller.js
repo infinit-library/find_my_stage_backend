@@ -263,6 +263,26 @@ class EventController {
       });
     }
   }
+
+  // Get limited events (20 records)
+  static async getLimitedEvents(req, res) {
+    try {
+      const events = await EventModel.getLimitedEvents();
+
+      res.json({
+        success: true,
+        message: 'Limited events fetched successfully',
+        data: events,
+        count: events.length
+      });
+    } catch (error) {
+      console.error('Get limited events error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
 }
 
 module.exports = EventController;

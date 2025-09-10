@@ -1,10 +1,27 @@
 const EventbriteScraperService = require('../services/eventbrite-scraper.service');
 const EventbriteApiService = require('../services/eventbrite-api.service');
+const PaperCallScraperService = require('../services/papercall-scraper.service');
+const PlaywrightPaginationScraperService = require('../services/playwright-pagination-scraper.service');
 const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 const scraperService = new EventbriteScraperService();
 const apiService = new EventbriteApiService(process.env.EVENTBRITE_API_KEY);
+const paperCallScraperService = new PaperCallScraperService();
+const playwrightPaginationScraperService = new PlaywrightPaginationScraperService();
+
+/**
+ * Clean text by removing newlines and extra whitespace
+ * @param {string} text - Text to clean
+ * @returns {string} Cleaned text
+ */
+function cleanText(text) {
+  if (!text) return '';
+  return text
+    .replace(/\n/g, ' ') // Replace newlines with spaces
+    .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+    .trim(); // Remove leading/trailing whitespace
+}
 
 class ScraperController {
   /**
@@ -273,6 +290,413 @@ class ScraperController {
       res.status(500).json({
         success: false,
         message: 'Scraper test failed',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Scrape PaperCall.io events
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  async scrapePaperCallEvents(req, res) {
+    try {
+      const {
+        maxEvents = null, // Set to null to get ALL events
+        saveToDatabase = true,
+        headless = true
+      } = req.body;
+
+      console.log('Starting PaperCall.io events request...');
+      
+      // Validate parameters
+      if (maxEvents && maxEvents > 1000) {
+        return res.status(400).json({
+          success: false,
+          message: 'Maximum events limit is 1000. Set maxEvents to null to get ALL events.'
+        });
+      }
+
+      let events = [];
+      let saveResult = null;
+
+      // Use PaperCall scraper
+      console.log('Using PaperCall.io scraper...');
+      events = await paperCallScraperService.scrapePaperCallEvents({
+        maxEvents: parseInt(maxEvents),
+        headless: headless,
+        delay: 1000
+      });
+      
+      // Save to database if requested
+      if (saveToDatabase && events.length > 0) {
+        console.log('Saving events to database...');
+        saveResult = await paperCallScraperService.saveEventsToDatabase(events, prisma);
+      }
+      // Transform events to match the required format
+      const formattedEvents = events.map(event => ({
+        title: cleanText(event.title) || 'No title available',
+        eventUrl: event.eventUrl || 'https://www.papercall.io/pricing',
+        description: cleanText(event.description) || 'No description available',
+        dateTime: event.dateTime || null,
+        tags: event.tags || ['Pro Event'],
+        imageUrl: event.imageUrl || null,
+        website: event.website || null,
+        source: event.source || 'PaperCall.io',
+        scrapedAt: event.scrapedAt || new Date().toISOString()
+      }));
+
+      res.status(200).json({
+        success: true,
+        message: `Successfully fetched ${formattedEvents.length} events from PaperCall.io`,
+        data: {
+          eventsFound: formattedEvents.length,
+          allEvents: formattedEvents,
+          saveResult: saveResult,
+          method: 'PaperCall.io Scraping',
+          scrapedAt: new Date().toISOString()
+        }
+      });
+
+    } catch (error) {
+      console.error('PaperCall.io events fetch error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch events from PaperCall.io',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Test PaperCall scraper functionality
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  async testPaperCallScraper(req, res) {
+    try {
+      console.log('Testing PaperCall.io scraper functionality...');
+      
+      // Test with minimal parameters
+      const events = await paperCallScraperService.scrapePaperCallEvents({
+        maxEvents: 5,
+        headless: true,
+        delay: 500
+      });
+
+      // Transform events to match the required format
+      const formattedEvents = events.map(event => ({
+        title: cleanText(event.title) || 'No title available',
+        eventUrl: event.eventUrl || 'https://www.papercall.io/pricing',
+        description: cleanText(event.description) || 'No description available',
+        dateTime: event.dateTime || null,
+        tags: event.tags || ['Pro Event'],
+        imageUrl: event.imageUrl || null,
+        website: event.website || null,
+        source: event.source || 'PaperCall.io',
+        scrapedAt: event.scrapedAt || new Date().toISOString()
+      }));
+
+      res.status(200).json({
+        success: true,
+        message: 'PaperCall.io scraper test successful',
+        data: {
+          eventsFound: formattedEvents.length,
+          allEvents: formattedEvents
+        }
+      });
+
+    } catch (error) {
+      console.error('PaperCall.io scraper test failed:', error);
+      res.status(500).json({
+        success: false,
+        message: 'PaperCall.io scraper test failed',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Scrape events using Playwright with full pagination support
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  async scrapeWithPlaywrightPagination(req, res) {
+    try {
+      const {
+        maxEvents = null, // Set to null to get ALL events
+        saveToDatabase = true,
+        headless = true,
+        delay = 2000,
+        maxPages = 50,
+        scrollToLoad = true
+      } = req.body;
+
+      console.log('🚀 Starting Playwright pagination scraper...');
+      console.log(`📊 Target: ${maxEvents || 'ALL'} events, max pages: ${maxPages}`);
+      
+      // Validate parameters
+      if (maxEvents && maxEvents > 5000) {
+        return res.status(400).json({
+          success: false,
+          message: 'Maximum events limit is 5000. Set maxEvents to null to get ALL events.'
+        });
+      }
+
+      let events = [];
+      let saveResult = null;
+
+      // Use Playwright pagination scraper
+      console.log('🎭 Using Playwright pagination scraper...');
+      events = await playwrightPaginationScraperService.scrapeWithPagination({
+        maxEvents: maxEvents ? parseInt(maxEvents) : null,
+        headless: headless,
+        delay: parseInt(delay),
+        maxPages: parseInt(maxPages),
+        scrollToLoad: scrollToLoad
+      });
+      
+      // Save to database if requested
+      if (saveToDatabase && events.length > 0) {
+        console.log('💾 Saving events to database...');
+        saveResult = await playwrightPaginationScraperService.saveEventsToDatabase(events, prisma);
+      }
+
+      // Transform events to match the required format
+      const formattedEvents = events.map(event => ({
+        title: cleanText(event.title) || 'No title available',
+        eventUrl: event.eventUrl || 'https://www.papercall.io/pricing',
+        description: cleanText(event.description) || 'No description available',
+        dateTime: event.dateTime || null,
+        tags: event.tags || ['Pro Event'],
+        imageUrl: event.imageUrl || null,
+        website: event.website || null,
+        source: event.source || 'PaperCall.io',
+        scrapedAt: event.scrapedAt || new Date().toISOString(),
+        location: event.location || null,
+        eventType: event.eventType || null,
+        cfpInfo: event.cfpInfo || null,
+        contactEmail: event.contactEmail || null
+      }));
+
+      res.status(200).json({
+        success: true,
+        message: `Successfully scraped ${formattedEvents.length} events using Playwright pagination`,
+        data: {
+          eventsFound: formattedEvents.length,
+          allEvents: formattedEvents,
+          saveResult: saveResult,
+          method: 'Playwright Pagination Scraping',
+          scrapedAt: new Date().toISOString(),
+          paginationInfo: {
+            maxPages: maxPages,
+            scrollToLoad: scrollToLoad,
+            delay: delay
+          }
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ Playwright pagination scraping error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to scrape events with Playwright pagination',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Test Playwright pagination scraper functionality
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  async testPlaywrightPaginationScraper(req, res) {
+    try {
+      console.log('🧪 Testing Playwright pagination scraper functionality...');
+      
+      // Get query parameters for customization
+      const { maxEvents = null, maxPages = 14 } = req.query;
+      
+      // Test with configurable parameters
+      const events = await playwrightPaginationScraperService.scrapeWithPagination({
+        maxEvents: maxEvents ? parseInt(maxEvents) : null, // null = get ALL events
+        headless: true,
+        delay: 1000,
+        maxPages: parseInt(maxPages),
+        scrollToLoad: true
+      });
+
+      // Transform events to match the required format
+      const formattedEvents = events.map(event => ({
+        title: cleanText(event.title) || 'No title available',
+        eventUrl: event.eventUrl || 'https://www.papercall.io/pricing',
+        description: cleanText(event.description) || 'No description available',
+        dateTime: event.dateTime || null,
+        tags: event.tags || ['Pro Event'],
+        imageUrl: event.imageUrl || null,
+        website: event.website || null,
+        source: event.source || 'PaperCall.io',
+        scrapedAt: event.scrapedAt || new Date().toISOString(),
+        location: event.location || null,
+        eventType: event.eventType || null,
+        cfpInfo: event.cfpInfo || null,
+        contactEmail: event.contactEmail || null
+      }));
+
+      res.status(200).json({
+        success: true,
+        message: 'Playwright pagination scraper test successful',
+        data: {
+          eventsFound: formattedEvents.length,
+          allEvents: formattedEvents,
+          testTimestamp: new Date().toISOString(),
+          testConfig: {
+            maxEvents: maxEvents || 'ALL',
+            maxPages: parseInt(maxPages),
+            scrollToLoad: true
+          }
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ Playwright pagination scraper test failed:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Playwright pagination scraper test failed',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Get ALL events from PaperCall.io (no limits)
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  async getAllPaperCallEvents(req, res) {
+    try {
+      console.log('🚀 Getting ALL PaperCall.io events (no limits)...');
+      
+      // Scrape ALL events from ALL pages
+      const events = await playwrightPaginationScraperService.scrapeWithPagination({
+        maxEvents: null,        // null = get ALL events
+        headless: true,
+        delay: 2000,           // 2 second delay between pages
+        maxPages: 14,          // All 14 pages
+        scrollToLoad: true
+      });
+
+      // Transform events to match the required format
+      const formattedEvents = events.map(event => ({
+        title: cleanText(event.title) || 'No title available',
+        eventUrl: event.eventUrl || 'https://www.papercall.io/pricing',
+        description: cleanText(event.description) || 'No description available',
+        dateTime: event.dateTime || null,
+        tags: event.tags || ['Pro Event'],
+        imageUrl: event.imageUrl || null,
+        website: event.website || null,
+        source: event.source || 'PaperCall.io',
+        scrapedAt: event.scrapedAt || new Date().toISOString(),
+        location: event.location || null,
+        eventType: event.eventType || null,
+        cfpInfo: event.cfpInfo || null,
+        contactEmail: event.contactEmail || null
+      }));
+
+      res.status(200).json({
+        success: true,
+        message: `Successfully scraped ALL ${formattedEvents.length} events from PaperCall.io`,
+        data: {
+          eventsFound: formattedEvents.length,
+          allEvents: formattedEvents,
+          method: 'Playwright Pagination Scraping - ALL EVENTS',
+          scrapedAt: new Date().toISOString(),
+          paginationInfo: {
+            totalPages: 14,
+            eventsPerPage: Math.ceil(formattedEvents.length / 14),
+            scrollToLoad: true,
+            delay: 2000
+          }
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ Error getting all PaperCall.io events:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get all PaperCall.io events',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Scrape and save ALL 272 events to database
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  async scrapeAndSaveAllEvents(req, res) {
+    try {
+      console.log('🚀 Scraping and saving ALL 272 events to database...');
+      
+      // Scrape ALL events from ALL pages
+      const events = await playwrightPaginationScraperService.scrapeWithPagination({
+        maxEvents: null,        // null = get ALL events
+        headless: true,
+        delay: 2000,           // 2 second delay between pages
+        maxPages: 14,          // All 14 pages
+        scrollToLoad: true
+      });
+
+      console.log(`📊 Scraped ${events.length} events, now saving to database...`);
+
+      // Save all events to database
+      const saveResult = await playwrightPaginationScraperService.saveEventsToDatabase(events, prisma);
+
+      // Transform events to match the required format for response
+      const formattedEvents = events.map(event => ({
+        title: cleanText(event.title) || 'No title available',
+        eventUrl: event.eventUrl || 'https://www.papercall.io/pricing',
+        description: cleanText(event.description) || 'No description available',
+        dateTime: event.dateTime || null,
+        tags: event.tags || ['Pro Event'],
+        imageUrl: event.imageUrl || null,
+        website: event.website || null,
+        source: event.source || 'PaperCall.io',
+        scrapedAt: event.scrapedAt || new Date().toISOString(),
+        location: event.location || null,
+        eventType: event.eventType || null,
+        cfpInfo: event.cfpInfo || null,
+        contactEmail: event.contactEmail || null
+      }));
+
+      res.status(200).json({
+        success: true,
+        message: `Successfully scraped and saved ${saveResult.saved} events to database`,
+        data: {
+          eventsScraped: events.length,
+          eventsSaved: saveResult.saved,
+          eventsSkipped: saveResult.errors,
+          allEvents: formattedEvents,
+          saveResult: saveResult,
+          method: 'Playwright Pagination Scraping + Database Save',
+          scrapedAt: new Date().toISOString(),
+          paginationInfo: {
+            totalPages: 14,
+            eventsPerPage: Math.ceil(events.length / 14),
+            scrollToLoad: true,
+            delay: 2000
+          }
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ Error scraping and saving events:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to scrape and save events to database',
         error: error.message
       });
     }

@@ -15,13 +15,6 @@ model User {
   lastName              String
   fullName              String?
   profilePicture        String?
-  bio                   String?
-  phone                 String?
-  location              String?
-  website               String?
-  linkedin              String?
-  twitter               String?
-  instagram             String?
   googleId              String?          @unique
   isGoogleUser          Boolean          @default(false)
   isEmailVerified       Boolean          @default(false)
@@ -35,6 +28,7 @@ model User {
   createdAt             DateTime         @default(now())
   updatedAt             DateTime         @updatedAt
   lastLoginAt           DateTime?
+  status                String           @default("active")
   events                Event[]
   paymentHistory        PaymentHistory[]
   userTopics            UserTopic[]
@@ -43,30 +37,21 @@ model User {
 }
 
 model Event {
-  id                  String   @id @default(cuid())
+  id                  String    @id @default(cuid())
   title               String
   description         String?
   date                DateTime
-  dateTime            String?  // For scraped events with raw date/time text
   location            String?
-  venue               String?  // Venue name for scraped events
-  status              String   @default("UPCOMING")
-  maxParticipants     Int      @default(0)
-  currentParticipants Int      @default(0)
-  price               Float    @default(0)
-  priceDisplay        String?  // Display text for price (e.g., "Free", "From $25")
+  status              String    @default("UPCOMING")
   imageUrl            String?
-  eventUrl            String?  // Original event URL for scraped events
-  category            String?  // Event category/tags
-  source              String?  // Source of the event (e.g., "Eventbrite", "Manual")
-  sourceId            String?  // ID from the source platform
-  city                String?  // City for scraped events
-  state               String?  // State for scraped events
-  country             String?  // Country for scraped events
-  scrapedAt           DateTime? // When the event was scraped
-  metadata            Json?    // Additional metadata for scraped events
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  eventUrl            String?
+  source              String?
+  sourceId            Int?     // Unique integer ID for each site (1=PaperCall.io, 2=Eventbrite, etc.)
+  organizer           String?  // Event organizer name
+  state               String?
+  scrapedAt           DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
   topicId             String?
   userId              String?
   topic               Topic?   @relation(fields: [topicId], references: [id])

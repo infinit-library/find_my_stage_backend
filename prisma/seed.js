@@ -94,14 +94,9 @@ const seedDatabase = async () => {
           fullName: 'John Doe',
           isEmailVerified: true,
           subscriptionStatus: 'PREMIUM',
-          bio: 'Tech enthusiast and startup founder with 10+ years of experience in software development and entrepreneurship.',
-          location: 'San Francisco, CA',
-          website: 'https://johndoe.dev',
-          linkedin: 'https://linkedin.com/in/johndoe',
-          twitter: 'https://twitter.com/johndoe',
-          phone: '+1-555-0123',
           emailNotifications: true,
-          pushNotifications: true
+          pushNotifications: true,
+          status: 'active'
         },
         {
           email: 'jane.smith@example.com',
@@ -111,13 +106,9 @@ const seedDatabase = async () => {
           fullName: 'Jane Smith',
           isEmailVerified: true,
           subscriptionStatus: 'BASIC',
-          bio: 'Marketing professional and event organizer specializing in digital marketing and brand strategy.',
-          location: 'New York, NY',
-          website: 'https://janesmith.com',
-          linkedin: 'https://linkedin.com/in/janesmith',
-          phone: '+1-555-0124',
           emailNotifications: true,
-          pushNotifications: false
+          pushNotifications: false,
+          status: 'active'
         },
         {
           email: 'mike.johnson@example.com',
@@ -127,11 +118,9 @@ const seedDatabase = async () => {
           fullName: 'Mike Johnson',
           isEmailVerified: true,
           subscriptionStatus: 'FREE',
-          bio: 'Healthcare professional passionate about wellness and preventive medicine.',
-          location: 'Austin, TX',
-          linkedin: 'https://linkedin.com/in/mikejohnson',
           emailNotifications: true,
-          pushNotifications: true
+          pushNotifications: true,
+          status: 'active'
         },
         {
           email: 'sarah.wilson@example.com',
@@ -141,14 +130,9 @@ const seedDatabase = async () => {
           fullName: 'Sarah Wilson',
           isEmailVerified: true,
           subscriptionStatus: 'ENTERPRISE',
-          bio: 'Senior software engineer and tech conference speaker with expertise in cloud architecture and DevOps.',
-          location: 'Seattle, WA',
-          website: 'https://sarahwilson.tech',
-          linkedin: 'https://linkedin.com/in/sarahwilson',
-          twitter: 'https://twitter.com/sarahwilson',
-          phone: '+1-555-0125',
           emailNotifications: true,
-          pushNotifications: true
+          pushNotifications: true,
+          status: 'active'
         }
       ],
       skipDuplicates: true

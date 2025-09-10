@@ -59,7 +59,7 @@ app.get('/health', (req, res) => {
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/user', authMiddleware, userRoutes);
-app.use('/api/events', authMiddleware, eventRoutes);
+app.use('/api/events', eventRoutes);
 app.use('/api/topics', authMiddleware, topicRoutes);
 app.use('/api/payments', authMiddleware, paymentRoutes);
 app.use('/api/webhooks', webhookRoutes);

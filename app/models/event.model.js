@@ -279,6 +279,44 @@ class EventModel {
       throw error;
     }
   }
+
+  // Get limited events (exactly 20 records from the beginning)
+  static async getLimitedEvents() {
+    try {
+      const events = await prisma.event.findMany({
+        select: {
+          title: true,
+          date: true,
+          location: true,
+          eventUrl: true,
+          organizer: true
+        },
+        take: 20,
+        orderBy: { createdAt: 'asc' }
+      });
+
+      // Clean up text data
+      const cleanText = (text) => {
+        if (!text) return '';
+        return text
+          .replace(/\n/g, ' ') // Replace newlines with spaces
+          .replace(/\s+/g, ' ') // Replace multiple spaces with a single space
+          .trim(); // Remove leading/trailing whitespace
+      };
+
+      // Apply text cleaning to each event
+      const cleanedEvents = events.map(event => ({
+        ...event,
+        title: cleanText(event.title),
+        location: cleanText(event.location),
+        organizer: cleanText(event.organizer)
+      }));
+
+      return cleanedEvents;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = EventModel;
