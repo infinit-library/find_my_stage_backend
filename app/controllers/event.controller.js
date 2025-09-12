@@ -1,4 +1,5 @@
 const EventModel = require('../models/event.model');
+const ticketmasterService = require('../services/ticketmaster.service');
 
 class EventController {
   // Create a new event
@@ -280,6 +281,94 @@ class EventController {
       res.status(500).json({
         success: false,
         message: 'Internal server error'
+      });
+    }
+  }
+
+  // Get Ticketmaster events
+  static async getTicketmasterEvents(req, res) {
+    try {
+      const {
+        q: keyword,
+        city,
+        country = 'US',
+        size,
+        num = 100, 
+        page = 0
+      } = req.query;
+
+      if (!keyword) {
+        return res.status(400).json({
+          success: false,
+          message: 'Search query (q) is required'
+        });
+      }
+
+      const requestedSize = parseInt(num) || parseInt(size) || 100;
+
+      const searchParams = {
+        keyword: keyword.trim(),
+        city: city?.trim(),
+        countryCode: country,
+        size: requestedSize,
+        page: parseInt(page) || 0
+      };
+
+      if (searchParams.size < 1 || searchParams.size > 1000) {
+        return res.status(400).json({
+          success: false,
+          message: 'Number of results (num/size) must be between 1 and 1000'
+        });
+      }
+
+      console.log('Searching Ticketmaster events with params:', searchParams);
+
+      // Use pagination for requests > 20 events (lowered threshold), regular search for <= 20
+      let result;
+      if (searchParams.size > 20) {
+        console.log(`Requesting ${searchParams.size} events - using pagination`);
+        result = await ticketmasterService.searchEventsPaginated({
+          ...searchParams,
+          maxResults: searchParams.size
+        });
+      } else {
+        console.log(`Requesting ${searchParams.size} events - using single request`);
+        result = await ticketmasterService.searchEventsFormatted(searchParams);
+      }
+
+      if (!result.success) {
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to fetch Ticketmaster events',
+          error: result.error
+        });
+      }
+
+      res.json({
+        success: true,
+        message: 'Ticketmaster events retrieved successfully',
+        data: {
+          events: result.events,
+          total_results: result.total_results,
+          total_pages: result.total_pages,
+          current_page: result.current_page,
+          page_size: result.page_size,
+          query: result.query,
+          location: result.location,
+          count: result.events.length,
+          requests_made: result.requests_made,
+          events_fetched: result.events_fetched,
+          max_requested: result.max_requested,
+          source: 'Ticketmaster API'
+        }
+      });
+
+    } catch (error) {
+      console.error('Ticketmaster events search error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+        error: error.message
       });
     }
   }

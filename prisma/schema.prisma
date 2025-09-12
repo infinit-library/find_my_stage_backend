@@ -18,7 +18,6 @@ model User {
   googleId              String?          @unique
   isGoogleUser          Boolean          @default(false)
   isEmailVerified       Boolean          @default(false)
-  isActive              Boolean          @default(true)
   emailVerifiedAt       DateTime?
   subscriptionStatus    String           @default("FREE")
   subscriptionStartDate DateTime?
