@@ -212,8 +212,8 @@ class UsersController {
       const stats = {
         profileCompleteness: calculateProfileCompleteness(user),
         memberSince: user.createdAt,
-        isVerified: user.isVerified,
-        isActive: user.isActive
+        isVerified: user.isEmailVerified,
+        status: user.status
       };
 
       res.json({
@@ -277,7 +277,7 @@ class UsersController {
         website: user.website,
         linkedin: user.linkedin,
         twitter: user.twitter,
-        isVerified: user.isVerified,
+        isVerified: user.isEmailVerified,
         createdAt: user.createdAt
       };
 

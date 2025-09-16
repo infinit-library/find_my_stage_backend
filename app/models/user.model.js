@@ -22,7 +22,7 @@ class UserModel {
           lastName: true,
           profilePicture: true,
           isEmailVerified: true,
-          isActive: true,
+          status: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -78,7 +78,7 @@ class UserModel {
           lastName: true,
           profilePicture: true,
           isEmailVerified: true,
-          isActive: true,
+          status: true,
           updatedAt: true
         }
       });
@@ -168,11 +168,11 @@ class UserModel {
     try {
       const user = await prisma.user.update({
         where: { id },
-        data: { isActive: false },
+        data: { status: "inactive" },
         select: {
           id: true,
           email: true,
-          isActive: true
+          status: true
         }
       });
       return user;

@@ -74,7 +74,7 @@ router.post('/signup', async (req, res) => {
       email,
       password: hashedPassword,
       isEmailVerified: false,
-      isActive: true
+      status: "active"
     };
 
     const user = await UserModel.create(userData);
@@ -124,7 +124,7 @@ router.post('/signin', async (req, res) => {
     }
 
     // Check if user is active
-    if (!user.isActive) {
+    if (user.status !== "active") {
       return res.status(401).json({
         success: false,
         message: 'Account is deactivated'
@@ -189,7 +189,7 @@ router.post('/refresh', async (req, res) => {
     
     // Find user
     const user = await UserModel.findById(decoded.id);
-    if (!user || !user.isActive) {
+    if (!user || user.status !== "active") {
       return res.status(401).json({
         success: false,
         message: 'Invalid refresh token'

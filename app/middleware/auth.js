@@ -42,7 +42,7 @@ const authMiddleware = async (req, res, next) => {
       });
     }
 
-    if (!user.isActive) {
+    if (user.status !== "active") {
       return res.status(401).json({
         success: false,
         message: 'Access denied. Account is deactivated.'
@@ -106,7 +106,7 @@ const optionalAuthMiddleware = async (req, res, next) => {
     // Get user from database
     const user = await UserModel.findById(decoded.id);
     
-    if (user && user.isActive) {
+    if (user && user.status === "active") {
       req.user = {
         id: user.id,
         email: user.email,

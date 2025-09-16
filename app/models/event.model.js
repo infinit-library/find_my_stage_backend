@@ -93,8 +93,8 @@ class EventModel {
         where.endDate = { lte: new Date(filters.endDate) };
       }
 
-      if (filters.isActive !== undefined) {
-        where.isActive = filters.isActive;
+      if (filters.status !== undefined) {
+        where.status = filters.status;
       }
 
       const [events, total] = await Promise.all([
@@ -254,8 +254,8 @@ class EventModel {
     try {
       const events = await prisma.event.findMany({
         where: {
-          startDate: { gte: new Date() },
-          isActive: true
+          date: { gte: new Date() },
+          status: "UPCOMING"
         },
         take: limit,
         include: {
@@ -272,7 +272,7 @@ class EventModel {
             select: { speakers: true }
           }
         },
-        orderBy: { startDate: 'asc' }
+        orderBy: { date: 'asc' }
       });
       return events;
     } catch (error) {
