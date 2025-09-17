@@ -54,7 +54,7 @@ class UserModel {
       const user = await prisma.user.findUnique({
         where: { id },
         include: {
-          topics: true,
+          userTopics: true,
           events: true,
           paymentHistory: true
         }

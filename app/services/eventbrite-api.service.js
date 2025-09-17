@@ -22,6 +22,12 @@ class EventbriteApiService {
    */
   async searchEvents(city, options = {}) {
     try {
+      // Check if API key is properly configured
+      if (!this.apiKey || this.apiKey === 'test-key' || this.apiKey.length < 10) {
+        console.log('Eventbrite API key not properly configured, returning empty results');
+        return [];
+      }
+
       const params = {
         'location.address': city,
         'expand': 'venue,organizer,category',
@@ -31,6 +37,7 @@ class EventbriteApiService {
       };
 
       console.log(`Searching for events in ${city}...`);
+      console.log('Eventbrite API params:', params);
       
       const response = await this.client.get('/events/search/', { params });
       const events = response.data.events || [];
@@ -40,7 +47,11 @@ class EventbriteApiService {
       return this.formatEvents(events);
     } catch (error) {
       console.error('Error fetching events from Eventbrite API:', error.response?.data || error.message);
-      throw new Error(`Eventbrite API error: ${error.response?.data?.error_description || error.message}`);
+      console.error('Full error:', error);
+      
+      // Return empty array instead of throwing error to allow graceful fallback
+      console.log('Returning empty array due to Eventbrite API error');
+      return [];
     }
   }
 

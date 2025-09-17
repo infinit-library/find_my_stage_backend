@@ -9,6 +9,7 @@ router.get('/', optionalAuthMiddleware, EventController.getEvents);
 router.get('/upcoming', optionalAuthMiddleware, EventController.getUpcomingEvents);
 router.get('/limited', optionalAuthMiddleware, EventController.getLimitedEvents);
 router.get('/ticketmaster', optionalAuthMiddleware, EventController.getTicketmasterEvents);
+router.get('/eventbrite', optionalAuthMiddleware, EventController.getEventbriteEvents);
 router.get('/:id', optionalAuthMiddleware, EventController.getEventById);
 
 // Protected routes (auth required)

@@ -16,7 +16,7 @@ class EventModel {
               profilePicture: true
             }
           },
-          topics: true
+          topic: true
         }
       });
       return event;
@@ -40,7 +40,7 @@ class EventModel {
               profilePicture: true
             }
           },
-          topics: true,
+          topic: true,
           speakers: {
             include: {
               user: {
@@ -111,7 +111,7 @@ class EventModel {
                 profilePicture: true
               }
             },
-            topics: true,
+            topic: true,
             _count: {
               select: { speakers: true }
             }
@@ -151,7 +151,7 @@ class EventModel {
               profilePicture: true
             }
           },
-          topics: true
+          topic: true
         }
       });
       return event;
@@ -183,7 +183,7 @@ class EventModel {
           skip,
           take: limit,
           include: {
-            topics: true,
+            topic: true,
             _count: {
               select: { speakers: true }
             }
@@ -267,7 +267,7 @@ class EventModel {
               profilePicture: true
             }
           },
-          topics: true,
+          topic: true,
           _count: {
             select: { speakers: true }
           }

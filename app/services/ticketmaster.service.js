@@ -17,7 +17,26 @@ class TicketmasterService {
    */
   async searchEventsFormatted(params) {
     try {
-      const { keyword, city, countryCode, size, page } = params;
+      // Check if API key is properly configured
+      if (!this.apiKey || this.apiKey.length < 10) {
+        console.log('Ticketmaster API key not properly configured, returning empty results');
+        return {
+          success: true,
+          events: [],
+          total_results: 0,
+          total_pages: 0,
+          current_page: 0,
+          page_size: 0,
+          query: params.keyword || '',
+          location: params.city || params.countryCode || '',
+          requests_made: 0,
+          events_fetched: 0,
+          max_requested: params.size || 0,
+          source: 'Ticketmaster API (not configured)'
+        };
+      }
+
+      const { keyword, city, countryCode, size, page, classificationName, classificationId } = params;
       
       const searchParams = {
         apikey: this.apiKey,
@@ -25,6 +44,15 @@ class TicketmasterService {
         size: Math.min(size, 200), // Ticketmaster max per request
         page: page
       };
+
+      // Add classification parameters if provided and not undefined
+      if (classificationName && classificationName !== 'undefined') {
+        searchParams.classificationName = classificationName;
+      }
+      
+      if (classificationId && classificationId !== 'undefined') {
+        searchParams.classificationId = classificationId;
+      }
 
       if (city) {
         searchParams.city = city;
@@ -78,7 +106,26 @@ class TicketmasterService {
    */
   async searchEventsPaginated(params) {
     try {
-      const { keyword, city, countryCode, maxResults, page } = params;
+      // Check if API key is properly configured
+      if (!this.apiKey || this.apiKey.length < 10) {
+        console.log('Ticketmaster API key not properly configured, returning empty results');
+        return {
+          success: true,
+          events: [],
+          total_results: 0,
+          total_pages: 0,
+          current_page: 0,
+          page_size: 0,
+          query: params.keyword || '',
+          location: params.city || params.countryCode || '',
+          requests_made: 0,
+          events_fetched: 0,
+          max_requested: params.maxResults || 0,
+          source: 'Ticketmaster API (not configured)'
+        };
+      }
+
+      const { keyword, city, countryCode, maxResults, page, classificationName, classificationId } = params;
       const eventsPerPage = 200; // Ticketmaster max per request
       const totalPagesNeeded = Math.ceil(maxResults / eventsPerPage);
       
@@ -97,6 +144,15 @@ class TicketmasterService {
           size: eventsPerPage,
           page: currentPage + i
         };
+
+        // Add classification parameters if provided and not undefined
+        if (classificationName && classificationName !== 'undefined') {
+          searchParams.classificationName = classificationName;
+        }
+        
+        if (classificationId && classificationId !== 'undefined') {
+          searchParams.classificationId = classificationId;
+        }
 
         if (city) {
           searchParams.city = city;
