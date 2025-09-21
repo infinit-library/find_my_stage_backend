@@ -15,6 +15,7 @@ const paymentRoutes = require('./app/routes/payment.routes');
 const webhookRoutes = require('./app/routes/webhook.routes');
 const googleAuthRoutes = require('./app/routes/google-auth.routes');
 const scraperRoutes = require('./app/routes/scraper.routes');
+const openwebninjaRoutes = require('./app/routes/openwebninja.routes');
 
 // Import middleware
 const { authMiddleware } = require('./app/middleware/auth');
@@ -85,6 +86,7 @@ app.use('/api/payments', authMiddleware, paymentRoutes);
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/auth/google', googleAuthRoutes);
 app.use('/api/scraper', scraperRoutes);
+app.use('/api/openwebninja', openwebninjaRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

@@ -4,6 +4,12 @@ const { authMiddleware, optionalAuthMiddleware } = require('../middleware/auth')
 
 const router = express.Router();
 
+router.get('/call-for-data-speakers-events', EventController.getCallForDataSpeakersEvents);
+router.get('/call-for-data-speakers/stats', EventController.getCallForDataSpeakersStats);
+router.get('/call-for-data-speakers/region/:region', EventController.getCallForDataSpeakersEventsByRegion);
+router.get('/call-for-data-speakers/search', EventController.searchCallForDataSpeakersEvents);
+router.get('/call-for-data-speakers/openai-search', EventController.searchCallForDataSpeakersEventsWithOpenAI);
+
 // Public routes (no auth required)
 router.get('/', optionalAuthMiddleware, EventController.getEvents);
 router.get('/upcoming', optionalAuthMiddleware, EventController.getUpcomingEvents);

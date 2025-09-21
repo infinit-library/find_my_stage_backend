@@ -7,22 +7,12 @@ class PlaywrightPaginationScraperService {
         this.eventsUrl = 'https://www.papercall.io/events';
     }
 
-    /**
-     * Scrape events from PaperCall.io with full pagination support
-     * @param {Object} options - Scraping options
-     * @param {number} options.maxEvents - Maximum number of events to scrape (null for all)
-     * @param {boolean} options.headless - Run browser in headless mode
-     * @param {number} options.delay - Delay between requests in ms
-     * @param {number} options.maxPages - Maximum number of pages to scrape
-     * @param {boolean} options.scrollToLoad - Whether to scroll to load more content
-     * @returns {Array} Array of event objects
-     */
     async scrapeWithPagination(options = {}) {
         const {
-            maxEvents = null, // Set to null to get ALL events
+            maxEvents = null, 
             headless = true,
             delay = 2000,
-            maxPages = 50, // Maximum pages to scrape
+            maxPages = 50, 
             scrollToLoad = true
         } = options;
 
@@ -35,7 +25,7 @@ class PlaywrightPaginationScraperService {
             console.log('🚀 Starting Playwright pagination scraper...');
             console.log(`📊 Target: ${maxEvents || 'ALL'} events, max pages: ${maxPages}`);
 
-            // Launch browser with optimized settings
+            
             browser = await chromium.launch({
                 headless: headless,
                 args: [
@@ -51,7 +41,7 @@ class PlaywrightPaginationScraperService {
                 ]
             });
 
-            // Create context with realistic settings
+            
             context = await browser.newContext({
                 viewport: { width: 1920, height: 1080 },
                 userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -61,7 +51,7 @@ class PlaywrightPaginationScraperService {
 
             page = await context.newPage();
 
-            // Set up request interception to block unnecessary resources
+            
             await page.route('**/*', (route) => {
                 const resourceType = route.request().resourceType();
                 if (['image', 'stylesheet', 'font', 'media'].includes(resourceType)) {
@@ -71,14 +61,14 @@ class PlaywrightPaginationScraperService {
                 }
             });
 
-            // Navigate to the events page
+            
             console.log('🌐 Navigating to PaperCall.io events page...');
             await page.goto(this.eventsUrl, {
                 waitUntil: 'domcontentloaded',
                 timeout: 30000
             });
 
-            // Wait for initial content to load
+            
             await this.waitForContent(page);
 
             let currentPage = 1;
@@ -87,19 +77,19 @@ class PlaywrightPaginationScraperService {
             while (hasMorePages && currentPage <= maxPages) {
                 console.log(`📄 Processing page ${currentPage}...`);
 
-                // Verify we're still on the events page
+                
                 const currentUrl = page.url();
                 if (!currentUrl.includes('/events')) {
                     console.log(`❌ Not on events page anymore (${currentUrl}), stopping pagination`);
                     break;
                 }
 
-                // Scroll to load more content if enabled
+                
                 if (scrollToLoad) {
                     await this.scrollToLoadContent(page);
                 }
 
-                // Extract events from current page
+                
                 const pageEvents = await this.extractEventsFromPage(page);
                 
                 if (pageEvents.length === 0) {
@@ -110,25 +100,25 @@ class PlaywrightPaginationScraperService {
                 allEvents.push(...pageEvents);
                 console.log(`📄 Found ${pageEvents.length} events on page ${currentPage} (total: ${allEvents.length})`);
 
-                // Check if we have enough events
+                
                 if (maxEvents && allEvents.length >= maxEvents) {
                     console.log(`✅ Reached target of ${maxEvents} events across ${currentPage} pages`);
                     break;
                 }
 
-                // Try to navigate to next page
+                
                 const nextPageSuccess = await this.navigateToNextPage(page);
                 if (!nextPageSuccess) {
                     console.log(`📄 No next page found, stopping at page ${currentPage}`);
                     hasMorePages = false;
                 } else {
                     currentPage++;
-                    // Wait between page navigations
+                    
                     await page.waitForTimeout(delay);
                 }
             }
 
-            // Limit results if maxEvents is specified
+            
             const finalEvents = maxEvents ? allEvents.slice(0, maxEvents) : allEvents;
 
             console.log(`🎯 Scraping complete: Found ${finalEvents.length} events across ${currentPage} pages`);
@@ -143,10 +133,6 @@ class PlaywrightPaginationScraperService {
         }
     }
 
-    /**
-     * Wait for content to load on the page
-     * @param {Object} page - Playwright page object
-     */
     async waitForContent(page) {
         const selectors = [
             '.panel.panel-default',
@@ -164,19 +150,15 @@ class PlaywrightPaginationScraperService {
                 console.log(`✅ Content loaded with selector: ${selector}`);
                 return;
             } catch (error) {
-                // Continue to next selector
+                
             }
         }
 
-        // Fallback: wait for any content
+        
         console.log('⏳ Waiting for any content to load...');
         await page.waitForTimeout(3000);
     }
 
-    /**
-     * Scroll to load more content on the page
-     * @param {Object} page - Playwright page object
-     */
     async scrollToLoadContent(page) {
         console.log('📜 Scrolling to load more content...');
         
@@ -186,10 +168,10 @@ class PlaywrightPaginationScraperService {
         const maxScrollAttempts = 10;
 
         while (currentHeight > previousHeight && scrollAttempts < maxScrollAttempts) {
-            // Scroll to bottom
+            
             await page.evaluate('window.scrollTo(0, document.body.scrollHeight)');
             
-            // Wait for new content to load
+            
             await page.waitForTimeout(2000);
             
             previousHeight = currentHeight;
@@ -199,24 +181,19 @@ class PlaywrightPaginationScraperService {
             console.log(`📜 Scroll attempt ${scrollAttempts}/${maxScrollAttempts}, height: ${currentHeight}`);
         }
 
-        // Scroll back to top
+        
         await page.evaluate('window.scrollTo(0, 0)');
         await page.waitForTimeout(1000);
     }
 
-    /**
-     * Extract events from the current page
-     * @param {Object} page - Playwright page object
-     * @returns {Array} Array of event objects
-     */
     async extractEventsFromPage(page) {
         const events = [];
 
-        // Get page content
+        
         const content = await page.content();
         const $ = cheerio.load(content);
 
-        // Find event elements using multiple selectors
+        
         const eventSelectors = [
             '.panel.panel-default',
             '.panel-default',
@@ -245,7 +222,7 @@ class PlaywrightPaginationScraperService {
             return events;
         }
 
-        // Parse each event element
+        
         eventElements.each((index, element) => {
             try {
                 const event = this.parseEventCard($, $(element));
@@ -260,11 +237,7 @@ class PlaywrightPaginationScraperService {
         return events;
     }
 
-    /**
-     * Navigate to the next page
-     * @param {Object} page - Playwright page object
-     * @returns {boolean} True if navigation was successful
-     */
+
     async navigateToNextPage(page) {
         const currentUrl = page.url();
         const urlMatch = currentUrl.match(/[?&]page=(\d+)/);
@@ -273,26 +246,26 @@ class PlaywrightPaginationScraperService {
 
         console.log(`🔍 Looking for page ${nextPageNum} navigation...`);
 
-        // Method 1: Try to find direct page number link first (most reliable)
+        
         try {
             const nextPageLink = await page.$(`a[href*="page=${nextPageNum}"]`);
             if (nextPageLink) {
                 const href = await nextPageLink.getAttribute('href');
                 console.log(`➡️ Found direct page link: ${href}`);
                 
-                // Verify it's actually a page link, not an event link
+                
                 if (href && href.includes(`page=${nextPageNum}`) && !href.includes('/events/')) {
                     await nextPageLink.click();
                     await page.waitForLoadState('domcontentloaded', { timeout: 10000 });
                     
-                    // Verify we're still on the events page
+                    
                     const newUrl = page.url();
                     if (newUrl.includes('/events') && newUrl.includes(`page=${nextPageNum}`)) {
                         console.log(`✅ Successfully navigated to page ${nextPageNum}`);
                         return true;
                     } else {
                         console.log(`❌ Navigation went to wrong page: ${newUrl}`);
-                        // Go back to events page
+                        
                         await page.goto(`https://www.papercall.io/events?page=${nextPageNum}`, { 
                             waitUntil: 'domcontentloaded', 
                             timeout: 10000 
@@ -305,7 +278,7 @@ class PlaywrightPaginationScraperService {
             console.log(`❌ Direct page link method failed: ${error.message}`);
         }
 
-        // Method 2: Try "Next" button but verify it goes to the right place
+        
         const nextPageSelectors = [
             'a:has-text("Next")',
             'a:has-text(">")',
@@ -319,7 +292,7 @@ class PlaywrightPaginationScraperService {
             try {
                 const nextButton = await page.$(selector);
                 if (nextButton) {
-                    // Check if the button is enabled/clickable
+                    
                     const isDisabled = await nextButton.evaluate(el => 
                         el.disabled || el.classList.contains('disabled') || el.getAttribute('aria-disabled') === 'true'
                     );
@@ -328,19 +301,19 @@ class PlaywrightPaginationScraperService {
                         const href = await nextButton.getAttribute('href');
                         console.log(`➡️ Found next button with selector: ${selector}, href: ${href}`);
                         
-                        // Verify it's going to the right page
+                        
                         if (href && href.includes(`page=${nextPageNum}`)) {
                             await nextButton.click();
                             await page.waitForLoadState('domcontentloaded', { timeout: 10000 });
                             
-                            // Verify we're still on the events page
+                            
                             const newUrl = page.url();
                             if (newUrl.includes('/events') && newUrl.includes(`page=${nextPageNum}`)) {
                                 console.log(`✅ Successfully navigated to page ${nextPageNum}`);
                                 return true;
                             } else {
                                 console.log(`❌ Next button went to wrong page: ${newUrl}`);
-                                // Go back to events page
+                                
                                 await page.goto(`https://www.papercall.io/events?page=${nextPageNum}`, { 
                                     waitUntil: 'domcontentloaded', 
                                     timeout: 10000 
@@ -351,17 +324,17 @@ class PlaywrightPaginationScraperService {
                     }
                 }
             } catch (error) {
-                // Continue to next selector
+                
             }
         }
 
-        // Method 3: Direct URL navigation as fallback
+        
         try {
             const nextPageUrl = `https://www.papercall.io/events?page=${nextPageNum}`;
             console.log(`🔗 Trying direct URL navigation: ${nextPageUrl}`);
             await page.goto(nextPageUrl, { waitUntil: 'domcontentloaded', timeout: 10000 });
             
-            // Verify we have events on this page
+            
             const eventCount = await page.$$eval('.panel.panel-default', elements => elements.length);
             if (eventCount > 0) {
                 console.log(`✅ Successfully navigated to page ${nextPageNum} with ${eventCount} events`);
@@ -377,16 +350,10 @@ class PlaywrightPaginationScraperService {
         return false;
     }
 
-    /**
-     * Parse individual event card
-     * @param {Object} $ - Cheerio instance
-     * @param {Object} $card - Event card element
-     * @returns {Object} Parsed event object
-     */
     parseEventCard($, $card) {
         const event = {};
 
-        // Extract title - try multiple selectors
+        
         const titleSelectors = [
             'h3', 'h2', 'h1', 'h4',
             '.panel-title', '.event-title', '.title',
@@ -402,7 +369,7 @@ class PlaywrightPaginationScraperService {
             }
         }
 
-        // If no title found, try to get text from the first link
+        
         if (!event.title) {
             const linkText = $card.find('a').first().text().trim();
             if (linkText && linkText.length > 3) {
@@ -410,14 +377,14 @@ class PlaywrightPaginationScraperService {
             }
         }
 
-        // Extract event URL
+        
         const linkElement = $card.find('a').first();
         event.eventUrl = linkElement.attr('href');
         if (event.eventUrl && !event.eventUrl.startsWith('http')) {
             event.eventUrl = this.baseUrl + event.eventUrl;
         }
 
-        // Extract description/summary
+        
         const descriptionSelectors = [
             '.panel-body', '.description', '[class*="description"]',
             'p', '.event-description', '.summary'
@@ -431,7 +398,7 @@ class PlaywrightPaginationScraperService {
             }
         }
 
-        // Extract location
+        
         const locationSelectors = [
             '.location', '[class*="location"]', '[class*="venue"]',
             'address', '.city', '.country'
@@ -445,7 +412,7 @@ class PlaywrightPaginationScraperService {
             }
         }
 
-        // Extract dates
+        
         const dateSelectors = [
             '.date', '[class*="date"]', 'time', '[datetime]',
             '.event-date', '.cfp-date'
@@ -458,7 +425,7 @@ class PlaywrightPaginationScraperService {
         }
         event.dateTime = this.parseDateTime(dateTimeText);
 
-        // Extract CFP information
+        
         const cfpSelectors = [
             '.cfp', '[class*="cfp"]', '.call-for-papers', '.submission'
         ];
@@ -471,7 +438,7 @@ class PlaywrightPaginationScraperService {
             }
         }
 
-        // Extract tags/categories
+        
         const tagSelectors = [
             '.tags', '[class*="tag"]', '.categories', '[class*="category"]',
             '.badge', '[class*="badge"]'
@@ -488,11 +455,11 @@ class PlaywrightPaginationScraperService {
         }
         event.tags = tags;
 
-        // Extract image URL
+        
         const imgElement = $card.find('img').first();
         event.imageUrl = imgElement.attr('src') || imgElement.attr('data-src') || imgElement.attr('data-lazy');
 
-        // Extract event type
+        
         const typeSelectors = [
             '.event-type', '[class*="type"]', '.conference-type'
         ];
@@ -505,7 +472,7 @@ class PlaywrightPaginationScraperService {
             }
         }
 
-        // Extract organizer information
+        
         const organizerSelectors = [
             '.organizer', '[class*="organizer"]', '.host', '[class*="host"]',
             '.company', '[class*="company"]', '.sponsor', '[class*="sponsor"]',
@@ -520,9 +487,9 @@ class PlaywrightPaginationScraperService {
             }
         }
 
-        // If no organizer found in specific selectors, try to extract from description
+        
         if (!event.organizer && event.description) {
-            // Look for patterns like "by [organizer]", "hosted by [organizer]", etc.
+            
             const organizerPatterns = [
                 /(?:by|hosted by|presented by|organized by|sponsored by)\s+([^,.\n]+)/i,
                 /([^,.\n]+)\s+(?:presents?|hosts?|organizes?)/i
@@ -537,44 +504,39 @@ class PlaywrightPaginationScraperService {
             }
         }
 
-        // Extract additional metadata
+        
         const panelBody = $card.find('.panel-body');
         if (panelBody.length > 0) {
             const panelText = panelBody.text();
             
-            // Extract website URL
+            
             const websiteMatch = panelText.match(/(https?:\/\/[^\s]+)/);
             if (websiteMatch) {
                 event.website = websiteMatch[1];
             }
 
-            // Extract contact information
+            
             const emailMatch = panelText.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
             if (emailMatch) {
                 event.contactEmail = emailMatch[1];
             }
         }
 
-        // Add metadata
+        
         event.source = 'PaperCall.io';
         event.scrapedAt = new Date().toISOString();
 
         return event;
     }
 
-    /**
-     * Parse date and time from text
-     * @param {string} dateTimeText - Raw date/time text
-     * @returns {Object} Parsed date/time object
-     */
     parseDateTime(dateTimeText) {
         if (!dateTimeText) return null;
 
         const patterns = [
-            /(\w+)\s+(\d{1,2}),?\s+(\d{4})/i, // "September 10, 2025"
-            /(\d{1,2})\s+(\w+)\s+(\d{4})/i, // "10 September 2025"
-            /(\w+)\s+(\d{1,2})[-\s]+(\d{1,2}),?\s+(\d{4})/i, // "September 10-11, 2025"
-            /(\d{4})[-\s]+(\d{1,2})[-\s]+(\d{1,2})/i, // "2025-09-10"
+            /(\w+)\s+(\d{1,2}),?\s+(\d{4})/i, 
+            /(\d{1,2})\s+(\w+)\s+(\d{4})/i, 
+            /(\w+)\s+(\d{1,2})[-\s]+(\d{1,2}),?\s+(\d{4})/i, 
+            /(\d{4})[-\s]+(\d{1,2})[-\s]+(\d{1,2})/i, 
         ];
 
         for (const pattern of patterns) {
@@ -594,12 +556,6 @@ class PlaywrightPaginationScraperService {
         };
     }
 
-    /**
-     * Save events to database
-     * @param {Array} events - Array of event objects
-     * @param {Object} db - Database connection
-     * @returns {Object} Save result
-     */
     async saveEventsToDatabase(events, db) {
         try {
             const savedEvents = [];
@@ -607,7 +563,7 @@ class PlaywrightPaginationScraperService {
 
             for (const event of events) {
                 try {
-                    // Check if event already exists
+                    
                     const existingEvent = await db.event.findFirst({
                         where: {
                             title: event.title,
@@ -620,7 +576,7 @@ class PlaywrightPaginationScraperService {
                         continue;
                     }
 
-                    // Create new event - mapping to your actual database schema
+                    
                     const newEvent = await db.event.create({
                         data: {
                             title: event.title,
@@ -630,8 +586,8 @@ class PlaywrightPaginationScraperService {
                             imageUrl: event.imageUrl,
                             eventUrl: event.eventUrl,
                             source: event.source || 'PaperCall.io',
-                            sourceId: this.getSourceId(event.source || 'PaperCall.io'), // Unique integer for each site
-                            organizer: event.organizer, // Event organizer name
+                            sourceId: this.getSourceId(event.source || 'PaperCall.io'), 
+                            organizer: event.organizer, 
                             state: this.extractState(event.location),
                             scrapedAt: new Date(event.scrapedAt)
                         }
@@ -657,11 +613,7 @@ class PlaywrightPaginationScraperService {
         }
     }
 
-    /**
-     * Extract city from location string
-     * @param {string} location - Location string
-     * @returns {string} Extracted city
-     */
+
     extractCity(location) {
         if (!location) return null;
         
@@ -673,11 +625,6 @@ class PlaywrightPaginationScraperService {
         return location.split(',')[0]?.trim() || null;
     }
 
-    /**
-     * Extract state from location string
-     * @param {string} location - Location string
-     * @returns {string} Extracted state
-     */
     extractState(location) {
         if (!location) return null;
         
@@ -689,11 +636,7 @@ class PlaywrightPaginationScraperService {
         return null;
     }
 
-    /**
-     * Extract country from location string
-     * @param {string} location - Location string
-     * @returns {string} Extracted country
-     */
+
     extractCountry(location) {
         if (!location) return null;
         
@@ -705,11 +648,7 @@ class PlaywrightPaginationScraperService {
         return null;
     }
 
-    /**
-     * Get unique integer ID for each source site
-     * @param {string} source - The source name (e.g., 'PaperCall.io', 'Eventbrite')
-     * @returns {number} - Unique integer ID for the source
-     */
+ 
     getSourceId(source) {
         const sourceMapping = {
             'PaperCall.io': 1,
@@ -723,7 +662,7 @@ class PlaywrightPaginationScraperService {
             'Other': 9
         };
         
-        return sourceMapping[source] || 9; // Default to 'Other' if source not found
+        return sourceMapping[source] || 9; 
     }
 }
 

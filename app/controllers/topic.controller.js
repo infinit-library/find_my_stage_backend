@@ -1,7 +1,6 @@
 const TopicModel = require('../models/topic.model');
 
 class TopicController {
-  // Create a new topic
   static async createTopic(req, res) {
     try {
       const topic = await TopicModel.create(req.body);
@@ -20,7 +19,6 @@ class TopicController {
     }
   }
 
-  // Get all topics
   static async getTopics(req, res) {
     try {
       const { page = 1, limit = 10, search = '' } = req.query;
@@ -44,7 +42,6 @@ class TopicController {
     }
   }
 
-  // Get topic by ID
   static async getTopicById(req, res) {
     try {
       const { id } = req.params;
@@ -70,7 +67,6 @@ class TopicController {
     }
   }
 
-  // Update topic
   static async updateTopic(req, res) {
     try {
       const { id } = req.params;
@@ -99,7 +95,6 @@ class TopicController {
     }
   }
 
-  // Delete topic
   static async deleteTopic(req, res) {
     try {
       const { id } = req.params;
@@ -127,7 +122,6 @@ class TopicController {
     }
   }
 
-  // Add user to topic
   static async addUserToTopic(req, res) {
     try {
       const { id } = req.params;
@@ -157,7 +151,6 @@ class TopicController {
     }
   }
 
-  // Remove user from topic
   static async removeUserFromTopic(req, res) {
     try {
       const { id } = req.params;
@@ -186,7 +179,6 @@ class TopicController {
     }
   }
 
-  // Get user's topics
   static async getUserTopics(req, res) {
     try {
       const userId = req.user.id;
@@ -205,7 +197,6 @@ class TopicController {
     }
   }
 
-  // Get popular topics
   static async getPopularTopics(req, res) {
     try {
       const { limit = 10 } = req.query;
@@ -224,7 +215,6 @@ class TopicController {
     }
   }
 
-  // Search topics
   static async searchTopics(req, res) {
     try {
       const { q, limit = 10 } = req.query;

@@ -3,7 +3,7 @@ const axios = require('axios');
 class EventbriteApiService {
   constructor(apiKey) {
     this.apiKey = apiKey;
-    this.baseUrl = 'https://www.eventbriteapi.com/v3';
+    this.baseUrl = 'https://www.eventbriteapi.com/v3/events/search/';
     this.client = axios.create({
       baseURL: this.baseUrl,
       timeout: 30000,
@@ -14,15 +14,9 @@ class EventbriteApiService {
     });
   }
 
-  /**
-   * Search for events in a specific location
-   * @param {string} city - City name
-   * @param {Object} options - Search options
-   * @returns {Array} Array of event objects
-   */
   async searchEvents(city, options = {}) {
     try {
-      // Check if API key is properly configured
+      
       if (!this.apiKey || this.apiKey === 'test-key' || this.apiKey.length < 10) {
         console.log('Eventbrite API key not properly configured, returning empty results');
         return [];
@@ -49,19 +43,13 @@ class EventbriteApiService {
       console.error('Error fetching events from Eventbrite API:', error.response?.data || error.message);
       console.error('Full error:', error);
       
-      // Return empty array instead of throwing error to allow graceful fallback
+      
       console.log('Returning empty array due to Eventbrite API error');
       return [];
     }
   }
 
-  /**
-   * Get events by category
-   * @param {string} city - City name
-   * @param {string} category - Event category
-   * @param {Object} options - Search options
-   * @returns {Array} Array of event objects
-   */
+
   async getEventsByCategory(city, category, options = {}) {
     try {
       const params = {
@@ -87,11 +75,7 @@ class EventbriteApiService {
     }
   }
 
-  /**
-   * Get event details by ID
-   * @param {string} eventId - Event ID
-   * @returns {Object} Event details
-   */
+
   async getEventDetails(eventId) {
     try {
       const response = await this.client.get(`/events/${eventId}/`, {
@@ -107,10 +91,7 @@ class EventbriteApiService {
     }
   }
 
-  /**
-   * Get popular event categories
-   * @returns {Array} Array of category objects
-   */
+
   async getCategories() {
     try {
       const response = await this.client.get('/categories/');
@@ -121,20 +102,29 @@ class EventbriteApiService {
     }
   }
 
-  /**
-   * Format events from API response
-   * @param {Array} events - Raw events from API
-   * @returns {Array} Formatted events
-   */
-  formatEvents(events) {
-    return events.map(event => this.formatEvent(event));
+  isEventExpired(event) {
+    if (!event.start || !event.start.utc) {
+      return false; 
+    }
+    
+    const eventDate = new Date(event.start.utc);
+    const now = new Date();
+    
+    
+    const oneDayInMs = 24 * 60 * 60 * 1000;
+    return eventDate.getTime() < (now.getTime() - oneDayInMs);
   }
 
-  /**
-   * Format single event from API response
-   * @param {Object} event - Raw event from API
-   * @returns {Object} Formatted event
-   */
+  
+  formatEvents(events) {
+    
+    const activeEvents = events.filter(event => !this.isEventExpired(event));
+    console.log(`📅 Filtered out ${events.length - activeEvents.length} expired events from Eventbrite`);
+    
+    return activeEvents.map(event => this.formatEvent(event));
+  }
+
+  
   formatEvent(event) {
     const startDate = event.start ? new Date(event.start.utc) : null;
     const endDate = event.end ? new Date(event.end.utc) : null;
@@ -184,12 +174,7 @@ class EventbriteApiService {
     };
   }
 
-  /**
-   * Save events to database
-   * @param {Array} events - Array of formatted event objects
-   * @param {Object} db - Database connection
-   * @returns {Object} Save result
-   */
+
   async saveEventsToDatabase(events, db) {
     try {
       const savedEvents = [];
@@ -197,7 +182,7 @@ class EventbriteApiService {
 
       for (const event of events) {
         try {
-          // Check if event already exists by source ID
+          
           const existingEvent = await db.event.findFirst({
             where: {
               OR: [
@@ -218,7 +203,7 @@ class EventbriteApiService {
             continue;
           }
 
-          // Create new event
+          
           const newEvent = await db.event.create({
             data: {
               title: event.title,
@@ -261,15 +246,10 @@ class EventbriteApiService {
     }
   }
 
-  /**
-   * Extract city from location string
-   * @param {string} location - Location string
-   * @returns {string} City name
-   */
   extractCity(location) {
     if (!location) return 'Los Angeles';
     
-    // Try to extract city from location string
+    
     const parts = location.split(',');
     if (parts.length > 0) {
       return parts[0].trim();
@@ -278,21 +258,16 @@ class EventbriteApiService {
     return 'Los Angeles';
   }
 
-  /**
-   * Extract state from location string
-   * @param {string} location - Location string
-   * @returns {string} State abbreviation
-   */
   extractState(location) {
     if (!location) return 'CA';
     
-    // Look for state abbreviations
+    
     const stateMatch = location.match(/\b([A-Z]{2})\b/);
     if (stateMatch) {
       return stateMatch[1];
     }
     
-    // Look for California
+    
     if (location.toLowerCase().includes('california') || location.toLowerCase().includes('ca')) {
       return 'CA';
     }
@@ -300,11 +275,6 @@ class EventbriteApiService {
     return 'CA';
   }
 
-  /**
-   * Extract country from location string
-   * @param {string} location - Location string
-   * @returns {string} Country name
-   */
   extractCountry(location) {
     if (!location) return 'USA';
     

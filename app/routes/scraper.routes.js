@@ -12,6 +12,9 @@ router.get('/test-papercall', scraperController.testPaperCallScraper);
 // Test Playwright pagination scraper functionality (no auth required for testing)
 router.get('/test-playwright-pagination', scraperController.testPlaywrightPaginationScraper);
 
+// Test Pretalx scraper functionality (no auth required for testing)
+router.get('/test-pretalx', scraperController.testPretalxScraper);
+
 // Get ALL PaperCall.io events (no auth required for testing)
 router.get('/all-papercall-events', scraperController.getAllPaperCallEvents);
 
@@ -26,6 +29,19 @@ router.post('/papercall', authMiddleware, scraperController.scrapePaperCallEvent
 
 // Scrape events using Playwright with full pagination support
 router.post('/playwright-pagination', authMiddleware, scraperController.scrapeWithPlaywrightPagination);
+
+// Scrape Pretalx events (public endpoint for search functionality)
+router.post('/pretalx', (req, res) => scraperController.scrapePretalxEvents(req, res));
+
+// Get all Pretalx event IDs automatically
+router.post('/pretalx/event-ids', authMiddleware, scraperController.getAllPretalxEventIds);
+
+// Get Pretalx event slugs
+router.post('/pretalx/slugs', authMiddleware, scraperController.getPretalxEventSlugs);
+
+// Get specific Pretalx event details
+router.get('/pretalx/event/:slug', authMiddleware, scraperController.getPretalxEventDetails);
+
 // Get scraping statistics
 router.get('/stats', authMiddleware, scraperController.getScrapingStats);
 

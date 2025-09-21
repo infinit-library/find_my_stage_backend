@@ -4,14 +4,14 @@ const UserModel = require('../models/user.model');
 const bcrypt = require('bcryptjs');
 
 class GoogleAuthController {
-  // Google OAuth login
+
   static async googleLogin(req, res, next) {
     passport.authenticate('google', {
       scope: ['profile', 'email']
     })(req, res, next);
   }
 
-  // Google OAuth callback
+
   static async googleCallback(req, res, next) {
     passport.authenticate('google', async (err, user, info) => {
       try {
@@ -19,57 +19,50 @@ class GoogleAuthController {
           console.error('Google auth error:', err);
           return res.redirect(`${process.env.FRONTEND_URL}/auth?error=authentication_failed`);
         }
-
         if (!user) {
           return res.redirect(`${process.env.FRONTEND_URL}/auth?error=authentication_failed`);
         }
 
-        // Check if user exists in database
         let dbUser = await UserModel.findByEmail(user.email);
-
         if (!dbUser) {
-          // Create new user
+
           const newUserData = {
             email: user.email,
             firstName: user.firstName || user.displayName?.split(' ')[0] || '',
             lastName: user.lastName || user.displayName?.split(' ').slice(1).join(' ') || '',
             profilePicture: user.photos?.[0]?.value || null,
-            isVerified: true, // Google users are pre-verified
+            isVerified: true,
             googleId: user.id,
-            password: await bcrypt.hash(Math.random().toString(36), 12) // Random password for Google users
+            password: await bcrypt.hash(Math.random().toString(36), 12)
           };
-
           dbUser = await UserModel.create(newUserData);
         } else {
-          // Update existing user with Google ID if not set
+
           if (!dbUser.googleId) {
-            await UserModel.update(dbUser.id, { 
+            await UserModel.update(dbUser.id, {
               googleId: user.id,
-              isVerified: true 
+              isVerified: true
             });
           }
         }
 
-        // Generate JWT tokens
         const accessToken = jwt.sign(
-          { 
-            id: dbUser.id, 
-            email: dbUser.email 
+          {
+            id: dbUser.id,
+            email: dbUser.email
           },
           process.env.JWT_SECRET,
           { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
         );
-
         const refreshToken = jwt.sign(
-          { 
-            id: dbUser.id, 
-            email: dbUser.email 
+          {
+            id: dbUser.id,
+            email: dbUser.email
           },
           process.env.JWT_REFRESH_SECRET,
           { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d' }
         );
 
-        // Redirect to frontend with tokens
         const redirectUrl = `${process.env.FRONTEND_URL}/auth/callback?token=${accessToken}&refresh=${refreshToken}`;
         res.redirect(redirectUrl);
 
@@ -80,7 +73,7 @@ class GoogleAuthController {
     })(req, res, next);
   }
 
-  // Get Google OAuth URL
+
   static async getGoogleAuthUrl(req, res) {
     try {
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
@@ -90,7 +83,6 @@ class GoogleAuthController {
         `response_type=code&` +
         `access_type=offline&` +
         `prompt=consent`;
-
       res.json({
         success: true,
         data: {
@@ -106,12 +98,11 @@ class GoogleAuthController {
     }
   }
 
-  // Link Google account to existing user
+
   static async linkGoogleAccount(req, res) {
     try {
       const userId = req.user.id;
       const { googleToken } = req.body;
-
       if (!googleToken) {
         return res.status(400).json({
           success: false,
@@ -119,10 +110,9 @@ class GoogleAuthController {
         });
       }
 
-      // Verify Google token and get user info
-      // This would typically involve calling Google's API to verify the token
-      // For now, we'll assume the token is valid and contains user info
-      
+
+
+
       const user = await UserModel.findById(userId);
       if (!user) {
         return res.status(404).json({
@@ -131,12 +121,10 @@ class GoogleAuthController {
         });
       }
 
-      // Update user with Google ID
-      await UserModel.update(userId, { 
-        googleId: googleToken, // This should be the actual Google user ID
-        isVerified: true 
+      await UserModel.update(userId, {
+        googleId: googleToken,
+        isVerified: true
       });
-
       res.json({
         success: true,
         message: 'Google account linked successfully'
@@ -150,11 +138,10 @@ class GoogleAuthController {
     }
   }
 
-  // Unlink Google account
+
   static async unlinkGoogleAccount(req, res) {
     try {
       const userId = req.user.id;
-
       const user = await UserModel.findById(userId);
       if (!user) {
         return res.status(404).json({
@@ -162,7 +149,6 @@ class GoogleAuthController {
           message: 'User not found'
         });
       }
-
       if (!user.googleId) {
         return res.status(400).json({
           success: false,
@@ -170,7 +156,6 @@ class GoogleAuthController {
         });
       }
 
-      // Check if user has a password set (not just Google auth)
       if (!user.password) {
         return res.status(400).json({
           success: false,
@@ -178,9 +163,7 @@ class GoogleAuthController {
         });
       }
 
-      // Remove Google ID
       await UserModel.update(userId, { googleId: null });
-
       res.json({
         success: true,
         message: 'Google account unlinked successfully'

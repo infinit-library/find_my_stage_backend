@@ -8,14 +8,6 @@ class EventbriteScraperService {
         this.laEventsUrl = 'https://www.eventbrite.com/d/ca--los-angeles/events/';
     }
 
-    /**
-     * Scrape events from Eventbrite Los Angeles page
-     * @param {Object} options - Scraping options
-     * @param {number} options.maxEvents - Maximum number of events to scrape
-     * @param {boolean} options.headless - Run browser in headless mode
-     * @param {number} options.delay - Delay between requests in ms
-     * @returns {Array} Array of event objects
-     */
     async scrapeLosAngelesEvents(options = {}) {
         const {
             maxEvents = 50,
@@ -27,7 +19,7 @@ class EventbriteScraperService {
         try {
             console.log('Starting Eventbrite scraper...');
 
-            // Launch browser
+            
             browser = await puppeteer.launch({
                 headless: headless,
                 args: [
@@ -43,10 +35,10 @@ class EventbriteScraperService {
 
             const page = await browser.newPage();
 
-            // Set user agent to avoid detection
+            
             await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
 
-            // Set viewport
+            
             await page.setViewport({ width: 1920, height: 1080 });
 
             console.log('Navigating to Eventbrite LA events page...');
@@ -55,7 +47,7 @@ class EventbriteScraperService {
                 timeout: 30000
             });
 
-            // Wait for events to load using modern locator syntax
+            
             const eventSelectors = [
                 '.eds-g-cell',
                 '.discover-vertical-event-card',
@@ -80,20 +72,20 @@ class EventbriteScraperService {
             }
 
             if (!eventsLoaded) {
-                // Try to wait for any content that might contain events
+                
                 const bodyLocator = page.locator('body');
                 await bodyLocator.waitHandle({ timeout: 5000 });
                 console.log('Waiting for page content to load...');
                 await new Promise(resolve => setTimeout(resolve, 3000));
             }
 
-            // Scroll to load more events
+            
             await this.scrollToLoadEvents(page, maxEvents);
 
-            // Get page content
+            
             const content = await page.content();
 
-            // Parse with Cheerio
+            
             const $ = cheerio.load(content);
 
             const events = this.parseEvents($, maxEvents);
@@ -111,18 +103,13 @@ class EventbriteScraperService {
         }
     }
 
-    /**
-     * Scroll page to load more events
-     * @param {Object} page - Puppeteer page object
-     * @param {number} maxEvents - Maximum events to load
-     */
     async scrollToLoadEvents(page, maxEvents) {
         let previousHeight = 0;
         let currentHeight = await page.evaluate('document.body.scrollHeight');
         let scrollAttempts = 0;
         const maxScrollAttempts = 5;
 
-        // Try different selectors to count events based on actual HTML structure
+        
         const eventSelectors = [
             '.eds-g-cell',
             '.discover-vertical-event-card',
@@ -136,7 +123,7 @@ class EventbriteScraperService {
         ];
 
         while (currentHeight > previousHeight && scrollAttempts < maxScrollAttempts) {
-            // Check if we have enough events using any available selector
+            
             let eventCount = 0;
             for (const selector of eventSelectors) {
                 try {
@@ -146,7 +133,7 @@ class EventbriteScraperService {
                         break;
                     }
                 } catch (error) {
-                    // Continue to next selector
+                    
                 }
             }
 
@@ -155,10 +142,10 @@ class EventbriteScraperService {
                 break;
             }
 
-            // Scroll to bottom
+            
             await page.evaluate('window.scrollTo(0, document.body.scrollHeight)');
 
-            // Wait for new content to load
+            
             await new Promise(resolve => setTimeout(resolve, 2000));
 
             previousHeight = currentHeight;
@@ -167,16 +154,10 @@ class EventbriteScraperService {
         }
     }
 
-    /**
-     * Parse events from HTML content
-     * @param {Object} $ - Cheerio instance
-     * @param {number} maxEvents - Maximum events to parse
-     * @returns {Array} Array of parsed event objects
-     */
     parseEvents($, maxEvents) {
         const events = [];
 
-        // Try different selectors to find event cards based on actual HTML structure
+        
         const eventSelectors = [
             '.eds-g-cell',
             '.discover-vertical-event-card',
@@ -192,7 +173,7 @@ class EventbriteScraperService {
         let eventElements = null;
         let usedSelector = null;
 
-        // Find the first selector that returns elements
+        
         for (const selector of eventSelectors) {
             const elements = $(selector);
             if (elements.length > 0) {
@@ -205,7 +186,7 @@ class EventbriteScraperService {
 
         if (!eventElements || eventElements.length === 0) {
             console.log('No event elements found with any selector');
-            // Try to find any elements that might contain event information
+            
             const fallbackSelectors = [
                 'div[class*="card"]',
                 'article',
@@ -242,16 +223,10 @@ class EventbriteScraperService {
         return events;
     }
 
-    /**
-     * Parse individual event card
-     * @param {Object} $ - Cheerio instance
-     * @param {Object} $card - Event card element
-     * @returns {Object} Parsed event object
-     */
     parseEventCard($, $card) {
         const event = {};
 
-        // Extract title - try multiple selectors based on actual HTML structure
+        
         const titleSelectors = [
             'h3.event-card__clamp-line--two',
             'h3.Typography_root__487rx',
@@ -271,7 +246,7 @@ class EventbriteScraperService {
             }
         }
 
-        // If no title found, try to get text from the first link
+        
         if (!event.title) {
             const linkText = $card.find('a').first().text().trim();
             if (linkText && linkText.length > 3) {
@@ -279,7 +254,7 @@ class EventbriteScraperService {
             }
         }
 
-        // Extract date and time - try multiple selectors based on actual HTML structure
+        
         const dateSelectors = [
             'p.Typography_body-md-bold__487rx',
             '[data-testid="event-date"]',
@@ -297,7 +272,7 @@ class EventbriteScraperService {
         }
         event.dateTime = this.parseDateTime(dateTimeText);
 
-        // Extract location - try multiple selectors based on actual HTML structure
+        
         const locationSelectors = [
             'p.event-card__clamp-line--one',
             'p.Typography_body-md__487rx',
@@ -317,7 +292,7 @@ class EventbriteScraperService {
             }
         }
 
-        // Extract venue
+        
         const venueSelectors = [
             '[data-testid="event-venue"]',
             '.event-venue',
@@ -333,7 +308,7 @@ class EventbriteScraperService {
             }
         }
 
-        // Extract price - try multiple selectors based on actual HTML structure
+        
         const priceSelectors = [
             'div.DiscoverVerticalEventCard-module__priceWrapper___usWo6 p',
             'p:contains("From $")',
@@ -352,18 +327,18 @@ class EventbriteScraperService {
         }
         event.price = this.parsePrice(priceText);
 
-        // Extract image URL
+        
         const imgElement = $card.find('img').first();
         event.imageUrl = imgElement.attr('src') || imgElement.attr('data-src') || imgElement.attr('data-lazy');
 
-        // Extract event URL
+        
         const linkElement = $card.find('a').first();
         event.eventUrl = linkElement.attr('href');
         if (event.eventUrl && !event.eventUrl.startsWith('http')) {
             event.eventUrl = this.baseUrl + event.eventUrl;
         }
 
-        // Extract description/summary
+        
         const descriptionSelectors = [
             '[data-testid="event-description"]',
             '.event-description',
@@ -380,7 +355,7 @@ class EventbriteScraperService {
             }
         }
 
-        // Extract category/tags
+        
         const categorySelectors = [
             '[data-testid="event-category"]',
             '.event-category',
@@ -397,7 +372,7 @@ class EventbriteScraperService {
             }
         }
 
-        // Add metadata
+        
         event.source = 'Eventbrite';
         event.scrapedAt = new Date().toISOString();
         event.city = 'Los Angeles';
@@ -407,19 +382,14 @@ class EventbriteScraperService {
         return event;
     }
 
-    /**
-     * Parse date and time from text
-     * @param {string} dateTimeText - Raw date/time text
-     * @returns {Object} Parsed date/time object
-     */
     parseDateTime(dateTimeText) {
         if (!dateTimeText) return null;
 
-        // Common patterns for Eventbrite dates
+        
         const patterns = [
-            /(\w+),?\s+(\w+)\s+(\d+)\s*[•·]\s*(\d+):(\d+)\s*(AM|PM)/i, // "Friday • 10:00 PM"
-            /(\w+)\s+(\d+)\s*[•·]\s*(\d+):(\d+)\s*(AM|PM)/i, // "Sep 14 • 9:00 PM"
-            /(\w+)\s+(\d+)\s*[•·]\s*(\d+):(\d+)\s*(AM|PM)/i, // "Sep 20 • 10:30 AM"
+            /(\w+),?\s+(\w+)\s+(\d+)\s*[•·]\s*(\d+):(\d+)\s*(AM|PM)/i, 
+            /(\w+)\s+(\d+)\s*[•·]\s*(\d+):(\d+)\s*(AM|PM)/i, 
+            /(\w+)\s+(\d+)\s*[•·]\s*(\d+):(\d+)\s*(AM|PM)/i, 
         ];
 
         for (const pattern of patterns) {
@@ -442,15 +412,10 @@ class EventbriteScraperService {
         };
     }
 
-    /**
-     * Parse price from text
-     * @param {string} priceText - Raw price text
-     * @returns {Object} Parsed price object
-     */
     parsePrice(priceText) {
         if (!priceText) return null;
 
-        // Extract price information
+        
         const priceMatch = priceText.match(/\$(\d+(?:\.\d{2})?)/);
         const isFree = /free/i.test(priceText);
         const isSoldOut = /sold out|sold-out/i.test(priceText);
@@ -465,11 +430,6 @@ class EventbriteScraperService {
         };
     }
 
-    /**
-     * Get detailed event information from event page
-     * @param {string} eventUrl - URL of the event page
-     * @returns {Object} Detailed event information
-     */
     async getEventDetails(eventUrl) {
         try {
             const response = await axios.get(eventUrl, {
@@ -497,12 +457,6 @@ class EventbriteScraperService {
         }
     }
 
-    /**
-     * Save events to database
-     * @param {Array} events - Array of event objects
-     * @param {Object} db - Database connection
-     * @returns {Object} Save result
-     */
     async saveEventsToDatabase(events, db) {
         try {
             const savedEvents = [];
@@ -510,7 +464,7 @@ class EventbriteScraperService {
 
             for (const event of events) {
                 try {
-                    // Check if event already exists
+                    
                     const existingEvent = await db.event.findFirst({
                         where: {
                             title: event.title,
@@ -524,7 +478,7 @@ class EventbriteScraperService {
                         continue;
                     }
 
-                    // Create new event
+                    
                     const newEvent = await db.event.create({
                         data: {
                             title: event.title,

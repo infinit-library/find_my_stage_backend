@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 class UsersController {
-  // Get user profile
+
   static async getProfile(req, res) {
     try {
       const userId = req.user.id;
@@ -29,13 +29,13 @@ class UsersController {
     }
   }
 
-  // Update user profile
+
   static async updateProfile(req, res) {
     try {
       const userId = req.user.id;
       const updateData = req.body;
 
-      // Remove sensitive fields that shouldn't be updated through this endpoint
+    
       delete updateData.password;
       delete updateData.email;
       delete updateData.id;
@@ -58,7 +58,7 @@ class UsersController {
     }
   }
 
-  // Change password
+
   static async changePassword(req, res) {
     try {
       const userId = req.user.id;
@@ -78,7 +78,7 @@ class UsersController {
         });
       }
 
-      // Get user with password
+    
       const user = await UserModel.findById(userId);
       if (!user) {
         return res.status(404).json({
@@ -87,7 +87,7 @@ class UsersController {
         });
       }
 
-      // Verify current password
+    
       const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
       if (!isCurrentPasswordValid) {
         return res.status(400).json({
@@ -96,10 +96,10 @@ class UsersController {
         });
       }
 
-      // Hash new password
+    
       const hashedNewPassword = await bcrypt.hash(newPassword, 12);
 
-      // Update password
+    
       await UserModel.update(userId, { password: hashedNewPassword });
 
       res.json({
@@ -115,7 +115,7 @@ class UsersController {
     }
   }
 
-  // Upload profile picture
+
   static async uploadProfilePicture(req, res) {
     try {
       const userId = req.user.id;
@@ -146,7 +146,7 @@ class UsersController {
     }
   }
 
-  // Delete user account
+
   static async deleteAccount(req, res) {
     try {
       const userId = req.user.id;
@@ -159,7 +159,7 @@ class UsersController {
         });
       }
 
-      // Get user with password
+    
       const user = await UserModel.findById(userId);
       if (!user) {
         return res.status(404).json({
@@ -168,7 +168,7 @@ class UsersController {
         });
       }
 
-      // Verify password
+    
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
         return res.status(400).json({
@@ -177,7 +177,7 @@ class UsersController {
         });
       }
 
-      // Delete user
+    
       await UserModel.delete(userId);
 
       res.json({
@@ -193,13 +193,13 @@ class UsersController {
     }
   }
 
-  // Get user statistics
+
   static async getUserStats(req, res) {
     try {
       const userId = req.user.id;
       
-      // This would typically involve more complex queries
-      // For now, we'll return basic stats
+    
+    
       const user = await UserModel.findById(userId);
       
       if (!user) {
@@ -229,7 +229,7 @@ class UsersController {
     }
   }
 
-  // Search users
+
   static async searchUsers(req, res) {
     try {
       const { page = 1, limit = 10, search = '' } = req.query;
@@ -253,7 +253,7 @@ class UsersController {
     }
   }
 
-  // Get user by ID (public profile)
+
   static async getUserById(req, res) {
     try {
       const { id } = req.params;
@@ -266,7 +266,7 @@ class UsersController {
         });
       }
 
-      // Remove sensitive information for public profile
+    
       const publicProfile = {
         id: user.id,
         firstName: user.firstName,
@@ -295,7 +295,6 @@ class UsersController {
   }
 }
 
-// Helper function to calculate profile completeness
 function calculateProfileCompleteness(user) {
   const fields = [
     'firstName',
