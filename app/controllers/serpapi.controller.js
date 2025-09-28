@@ -33,7 +33,7 @@ class SerpApiController {
       }
 
       // Check if SerpAPI key is configured
-      const serpApiKey = process.env.SERPAPI_KEY;
+      const serpApiKey = process.env.SERPAPI_API_KEY;
       if (!serpApiKey) {
         console.log('SerpAPI key not configured, returning empty results');
         return res.json({
@@ -392,7 +392,7 @@ class SerpApiController {
         });
       }
 
-      const serpApiKey = process.env.SERPAPI_KEY;
+      const serpApiKey = process.env.SERPAPI_API_KEY;
       if (!serpApiKey) {
         return res.json({
           success: true,
@@ -482,7 +482,7 @@ class SerpApiController {
         });
       }
 
-      const serpApiKey = process.env.SERPAPI_KEY;
+      const serpApiKey = process.env.SERPAPI_API_KEY;
       if (!serpApiKey) {
         return res.json({
           success: true,
@@ -569,7 +569,7 @@ class SerpApiController {
         });
       }
 
-      const serpApiKey = process.env.SERPAPI_KEY;
+      const serpApiKey = process.env.SERPAPI_API_KEY;
       if (!serpApiKey) {
         return res.json({
           success: true,
