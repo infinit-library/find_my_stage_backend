@@ -6,6 +6,8 @@ const rateLimit = require('express-rate-limit');
 // const session = require('express-session');
 require('dotenv').config();
 
+import pool from './app/config/db'; 
+
 // Import routes
 const authRoutes = require('./app/routes/auth.routes');
 const userRoutes = require('./app/routes/users.routes');
@@ -122,6 +124,16 @@ app.use((err, req, res, next) => {
     message: err.message || 'Internal server error',
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
   });
+});
+
+app.get("/", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT NOW()");
+    res.json({ success: true, time: result.rows[0].now });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // Start server

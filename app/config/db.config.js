@@ -5,7 +5,7 @@ const dbConfig = {
   // Connection options
   datasources: {
     db: {
-      url: process.env.DATABASE_URL
+      url: process.env.DATABASE_URL || 'postgres://neondb_owner:npg_IjeyM4vED3aX@ep-purple-glade-adfy1okc-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require'
     }
   },
   

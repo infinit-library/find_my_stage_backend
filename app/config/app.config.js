@@ -27,7 +27,8 @@ const config = {
   google: {
     clientId: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackUrl: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:5000/api/auth/google/callback'
+    // callbackUrl: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:5000/api/auth/google/callback'
+    callbackUrl: process.env.GOOGLE_CALLBACK_URL || 'https://find-my-stage-backend.vercel.app/api/auth/google/callback'
   },
 
   // Email Configuration
