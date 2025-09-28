@@ -16,7 +16,8 @@ const webhookRoutes = require('./app/routes/webhook.routes');
 const googleAuthRoutes = require('./app/routes/google-auth.routes');
 const scraperRoutes = require('./app/routes/scraper.routes');
 const openwebninjaRoutes = require('./app/routes/openwebninja.routes');
-
+const serpapiRoutes = require('./app/routes/serpapi.routes');
+const stripeRoutes = require('./app/routes/stripe.routes');
 // Import middleware
 const { authMiddleware } = require('./app/middleware/auth');
 
@@ -48,23 +49,6 @@ app.use(cors({
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Session configuration for Passport
-// app.use(session({
-//   secret: process.env.SESSION_SECRET || 'your-secret-key',
-//   resave: false,
-//   saveUninitialized: false,
-//   cookie: {
-//     secure: process.env.NODE_ENV === 'production',
-//     maxAge: 24 * 60 * 60 * 1000 // 24 hours
-//   }
-// }));
-
-// Passport configuration
-// app.use(passport.initialize());
-// app.use(passport.session());
-// 
-// Static files
 app.use('/uploads', express.static('uploads'));
 
 // Health check endpoint
@@ -87,6 +71,8 @@ app.use('/api/webhooks', webhookRoutes);
 app.use('/api/auth/google', googleAuthRoutes);
 app.use('/api/scraper', scraperRoutes);
 app.use('/api/openwebninja', openwebninjaRoutes);
+app.use('/api/serpapi', serpapiRoutes);
+app.use('/api/stripe', stripeRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
