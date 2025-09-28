@@ -92,6 +92,7 @@ router.post('/signup', async (req, res) => {
 
 router.post('/signin', async (req, res) => {
   try {
+    console.log("Signin request received");
     const { email, password } = req.body;
 
     if (!email || !password) {
