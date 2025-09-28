@@ -9,6 +9,7 @@ const router = express.Router();
 
 router.post('/signup', async (req, res) => {
   try {
+    console.log("Signup request received");
     const { firstName, lastName, email, password, confirmPassword } = req.body;
 
     if (!firstName || !lastName || !email || !password || !confirmPassword) {
@@ -132,7 +133,7 @@ router.post('/signin', async (req, res) => {
     );
     const refreshToken = jwt.sign(
       { id: user.id, email: user.email },
-      process.env.JWT_REFRESH_SECRET,
+      process.env.JWT_SECRET, // Using same secret for now
       { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d' }
     );
     res.json({
@@ -164,7 +165,7 @@ router.post('/refresh', async (req, res) => {
       });
     }
 
-    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET); // Using same secret for now
 
 
     const user = await UserModel.findById(decoded.id);
