@@ -11,7 +11,7 @@ const createPaymentIntent = async (req, res) => {
       }
   
       const paymentIntent = await stripe.paymentIntents.create({
-        amount, // in cents
+        amount, 
         currency,
         automatic_payment_methods: { enabled: true },
       });
@@ -34,7 +34,7 @@ const createCheckoutSession = async (req, res) => {
             return res.status(400).json({ error: "Email is required" });
         }
 
-        // Build success URL with search parameters
+        
         const baseUrl = process.env.FRONTEND_URL || 'http://localhost:8080';
         const searchParams = new URLSearchParams();
         if (topic) searchParams.set('topic', topic);
@@ -55,7 +55,7 @@ const createCheckoutSession = async (req, res) => {
                             name: 'Find My Stage Subscription',
                             description: 'Full access to 100+ additional opportunities',
                         },
-                        unit_amount: 9700, // $97.00 in cents
+                        unit_amount: 9700, 
                     },
                     quantity: 1,
                 },

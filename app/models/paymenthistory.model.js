@@ -1,7 +1,7 @@
 const prisma = require('./index');
 
 class PaymentHistoryModel {
-  // Create a new payment record
+  
   static async create(paymentData) {
     try {
       const payment = await prisma.paymentHistory.create({
@@ -23,7 +23,7 @@ class PaymentHistoryModel {
     }
   }
 
-  // Find payment by ID
+  
   static async findById(id) {
     try {
       const payment = await prisma.paymentHistory.findUnique({
@@ -45,7 +45,7 @@ class PaymentHistoryModel {
     }
   }
 
-  // Find payment by Stripe payment intent ID
+  
   static async findByPaymentIntentId(paymentIntentId) {
     try {
       const payment = await prisma.paymentHistory.findFirst({
@@ -67,13 +67,13 @@ class PaymentHistoryModel {
     }
   }
 
-  // Get all payments with pagination
+  
   static async findAll(page = 1, limit = 10, filters = {}) {
     try {
       const skip = (page - 1) * limit;
       const where = {};
 
-      // Apply filters
+      
       if (filters.userId) {
         where.userId = filters.userId;
       }
@@ -127,7 +127,7 @@ class PaymentHistoryModel {
     }
   }
 
-  // Get payments by user
+  
   static async findByUser(userId, page = 1, limit = 10) {
     try {
       const skip = (page - 1) * limit;
@@ -156,7 +156,7 @@ class PaymentHistoryModel {
     }
   }
 
-  // Update payment status
+  
   static async updateStatus(id, status, additionalData = {}) {
     try {
       const payment = await prisma.paymentHistory.update({
@@ -182,7 +182,7 @@ class PaymentHistoryModel {
     }
   }
 
-  // Update payment by payment intent ID
+  
   static async updateByPaymentIntentId(paymentIntentId, updateData) {
     try {
       const payment = await prisma.paymentHistory.updateMany({
@@ -195,7 +195,7 @@ class PaymentHistoryModel {
     }
   }
 
-  // Get payment statistics
+  
   static async getStats(userId = null, startDate = null, endDate = null) {
     try {
       const where = {};
@@ -248,7 +248,7 @@ class PaymentHistoryModel {
     }
   }
 
-  // Get recent payments
+  
   static async getRecent(limit = 10) {
     try {
       const payments = await prisma.paymentHistory.findMany({
@@ -271,7 +271,7 @@ class PaymentHistoryModel {
     }
   }
 
-  // Delete payment (soft delete by updating status)
+  
   static async delete(id) {
     try {
       const payment = await prisma.paymentHistory.update({

@@ -1,7 +1,7 @@
 const prisma = require('./index');
 
 class EventModel {
-  // Create a new event
+  
   static async create(eventData) {
     try {
       const event = await prisma.event.create({
@@ -25,7 +25,7 @@ class EventModel {
     }
   }
 
-  // Find event by ID
+  
   static async findById(id) {
     try {
       const event = await prisma.event.findUnique({
@@ -62,13 +62,13 @@ class EventModel {
     }
   }
 
-  // Get all events with pagination and filters
+  
   static async findAll(page = 1, limit = 10, filters = {}) {
     try {
       const skip = (page - 1) * limit;
       const where = {};
 
-      // Apply filters
+      
       if (filters.search) {
         where.OR = [
           { title: { contains: filters.search, mode: 'insensitive' } },
@@ -135,7 +135,7 @@ class EventModel {
     }
   }
 
-  // Update event
+  
   static async update(id, updateData) {
     try {
       const event = await prisma.event.update({
@@ -160,7 +160,7 @@ class EventModel {
     }
   }
 
-  // Delete event
+  
   static async delete(id) {
     try {
       await prisma.event.delete({
@@ -172,7 +172,7 @@ class EventModel {
     }
   }
 
-  // Get events by organizer
+  
   static async findByOrganizer(organizerId, page = 1, limit = 10) {
     try {
       const skip = (page - 1) * limit;
@@ -207,7 +207,7 @@ class EventModel {
     }
   }
 
-  // Add speaker to event
+  
   static async addSpeaker(eventId, userId, speakerData = {}) {
     try {
       const speaker = await prisma.eventSpeaker.create({
@@ -234,7 +234,7 @@ class EventModel {
     }
   }
 
-  // Remove speaker from event
+  
   static async removeSpeaker(eventId, userId) {
     try {
       await prisma.eventSpeaker.deleteMany({
@@ -249,7 +249,7 @@ class EventModel {
     }
   }
 
-  // Get upcoming events
+  
   static async getUpcoming(limit = 10) {
     try {
       const events = await prisma.event.findMany({
@@ -280,7 +280,7 @@ class EventModel {
     }
   }
 
-  // Get limited events (exactly 20 records from the beginning)
+  
   static async getLimitedEvents() {
     try {
       const events = await prisma.event.findMany({
@@ -295,16 +295,16 @@ class EventModel {
         orderBy: { createdAt: 'asc' }
       });
 
-      // Clean up text data
+      
       const cleanText = (text) => {
         if (!text) return '';
         return text
-          .replace(/\n/g, ' ') // Replace newlines with spaces
-          .replace(/\s+/g, ' ') // Replace multiple spaces with a single space
-          .trim(); // Remove leading/trailing whitespace
+          .replace(/\n/g, ' ') 
+          .replace(/\s+/g, ' ') 
+          .trim(); 
       };
 
-      // Apply text cleaning to each event
+      
       const cleanedEvents = events.map(event => ({
         ...event,
         title: cleanText(event.title),

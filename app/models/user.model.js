@@ -1,10 +1,10 @@
 const prisma = require('./index');
 
 class UserModel {
-  // Create a new user
+  
   static async create(userData) {
     try {
-      // Check for duplicate email
+      
       const existingUser = await prisma.user.findUnique({
         where: { email: userData.email },
       });
@@ -35,7 +35,7 @@ class UserModel {
     }
   }
 
-  // Find user by email
+  
   static async findByEmail(email) {
     try {
       return await prisma.user.findUnique({
@@ -48,7 +48,7 @@ class UserModel {
     }
   }
 
-  // Find user by ID
+  
   static async findById(id) {
     try {
       const user = await prisma.user.findUnique({
@@ -65,7 +65,7 @@ class UserModel {
     }
   }
 
-  // Update user
+  
   static async update(id, updateData) {
     try {
       const user = await prisma.user.update({
@@ -88,7 +88,7 @@ class UserModel {
     }
   }
 
-  // Delete user
+  
   static async delete(id) {
     try {
       await prisma.user.delete({
@@ -100,7 +100,7 @@ class UserModel {
     }
   }
 
-  // Get all users with pagination
+  
   static async findAll(page = 1, limit = 10, search = '') {
     try {
       const skip = (page - 1) * limit;
@@ -145,7 +145,7 @@ class UserModel {
     }
   }
 
-  // Verify user email
+  
   static async verifyEmail(id) {
     try {
       const user = await prisma.user.update({
@@ -163,7 +163,7 @@ class UserModel {
     }
   }
 
-  // Deactivate user
+  
   static async deactivate(id) {
     try {
       const user = await prisma.user.update({

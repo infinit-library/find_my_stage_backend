@@ -1,7 +1,7 @@
 const prisma = require('./index');
 
 class TopicModel {
-  // Create a new topic
+  
   static async create(topicData) {
     try {
       const topic = await prisma.topic.create({
@@ -24,7 +24,7 @@ class TopicModel {
     }
   }
 
-  // Find topic by ID
+  
   static async findById(id) {
     try {
       const topic = await prisma.topic.findUnique({
@@ -59,7 +59,7 @@ class TopicModel {
     }
   }
 
-  // Find topic by name
+  
   static async findByName(name) {
     try {
       const topic = await prisma.topic.findFirst({
@@ -87,7 +87,7 @@ class TopicModel {
     }
   }
 
-  // Get all topics with pagination
+  
   static async findAll(page = 1, limit = 10, search = '') {
     try {
       const skip = (page - 1) * limit;
@@ -130,7 +130,7 @@ class TopicModel {
     }
   }
 
-  // Update topic
+  
   static async update(id, updateData) {
     try {
       const topic = await prisma.topic.update({
@@ -154,7 +154,7 @@ class TopicModel {
     }
   }
 
-  // Delete topic
+  
   static async delete(id) {
     try {
       await prisma.topic.delete({
@@ -166,7 +166,7 @@ class TopicModel {
     }
   }
 
-  // Add user to topic
+  
   static async addUser(topicId, userId) {
     try {
       const topicUser = await prisma.topicUser.create({
@@ -199,7 +199,7 @@ class TopicModel {
     }
   }
 
-  // Remove user from topic
+  
   static async removeUser(topicId, userId) {
     try {
       await prisma.topicUser.deleteMany({
@@ -214,7 +214,7 @@ class TopicModel {
     }
   }
 
-  // Get topics by user
+  
   static async findByUser(userId) {
     try {
       const topics = await prisma.topic.findMany({
@@ -241,7 +241,7 @@ class TopicModel {
     }
   }
 
-  // Get popular topics
+  
   static async getPopular(limit = 10) {
     try {
       const topics = await prisma.topic.findMany({
@@ -266,7 +266,7 @@ class TopicModel {
     }
   }
 
-  // Search topics
+  
   static async search(query, limit = 10) {
     try {
       const topics = await prisma.topic.findMany({

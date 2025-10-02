@@ -12,7 +12,7 @@ const authMiddleware = async (req, res, next) => {
       });
     }
 
-    // Check if header starts with 'Bearer '
+    
     if (!authHeader.startsWith('Bearer ')) {
       return res.status(401).json({
         success: false,
@@ -20,7 +20,7 @@ const authMiddleware = async (req, res, next) => {
       });
     }
 
-    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+    const token = authHeader.substring(7); 
 
     if (!token) {
       return res.status(401).json({
@@ -29,10 +29,10 @@ const authMiddleware = async (req, res, next) => {
       });
     }
 
-    // Verify token
+    
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // Get user from database
+    
     const user = await UserModel.findById(decoded.id);
     
     if (!user) {
@@ -49,7 +49,7 @@ const authMiddleware = async (req, res, next) => {
       });
     }
 
-    // Add user to request object
+    
     req.user = {
       id: user.id,
       email: user.email,
@@ -83,7 +83,7 @@ const authMiddleware = async (req, res, next) => {
   }
 };
 
-// Optional auth middleware (doesn't fail if no token)
+
 const optionalAuthMiddleware = async (req, res, next) => {
   try {
     const authHeader = req.header('Authorization');
@@ -100,10 +100,10 @@ const optionalAuthMiddleware = async (req, res, next) => {
       return next();
     }
 
-    // Verify token
+    
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // Get user from database
+    
     const user = await UserModel.findById(decoded.id);
     
     if (user && user.status === "active") {
@@ -120,13 +120,13 @@ const optionalAuthMiddleware = async (req, res, next) => {
 
     next();
   } catch (error) {
-    // If token is invalid, just set user to null and continue
+    
     req.user = null;
     next();
   }
 };
 
-// Admin middleware
+
 const adminMiddleware = async (req, res, next) => {
   try {
     if (!req.user) {
@@ -136,7 +136,7 @@ const adminMiddleware = async (req, res, next) => {
       });
     }
 
-    // Check if user is admin (you can modify this logic based on your admin system)
+    
     const user = await UserModel.findById(req.user.id);
     
     if (!user || !user.isAdmin) {

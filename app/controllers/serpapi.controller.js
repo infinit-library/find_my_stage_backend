@@ -14,7 +14,7 @@ class SerpApiController {
         type = 'events'
       } = req.body;
 
-      // Build query from parameters
+      
       let searchQuery = query;
       if (!searchQuery && industry && topic) {
         searchQuery = `${industry} ${topic}`;
@@ -24,7 +24,7 @@ class SerpApiController {
         searchQuery = topic;
       }
 
-      // Validate required parameters
+      
       if (!searchQuery) {
         return res.status(400).json({
           success: false,
@@ -32,7 +32,7 @@ class SerpApiController {
         });
       }
 
-      // Check if SerpAPI key is configured
+      
       const serpApiKey = process.env.SERPAPI_API_KEY;
       if (!serpApiKey) {
         console.log('SerpAPI key not configured, returning empty results');
@@ -52,11 +52,11 @@ class SerpApiController {
 
       console.log(`🔍 Searching SerpAPI for events: "${searchQuery}" in ${location}`);
 
-      // Build SerpAPI request parameters
+      
       const serpApiParams = {
         q: searchQuery,
         location: location,
-        num: Math.min(parseInt(num) || 50, 100), // Default to 50, max 100 results
+        num: Math.min(parseInt(num) || 50, 100), 
         api_key: serpApiKey,
         engine: engine,
         google_domain: 'google.com',
@@ -64,61 +64,61 @@ class SerpApiController {
         gl: 'us'
       };
 
-      // Add engine-specific parameters for better event results
+      
       if (engine === 'google') {
-        // Remove image search for regular event search - we want web results
-        // serpApiParams.tbm = 'isch'; // This was causing image search instead of web results
         
-        // Build a more flexible search query to get more results
-        // Use broader search terms and remove time restrictions for more results
+        
+        
+        
+        
         const searchTerms = searchQuery.split(' ').filter(term => term.length > 2);
         const eventTerms = ['event', 'conference', 'summit', 'meeting', 'workshop', 'symposium', 'convention'];
         
-        // Create a broader search query that includes event-related terms
+        
         serpApiParams.q = `${searchQuery} ${eventTerms.join(' OR ')}`;
         
-        // Remove time restriction to get more historical results (more events available)
-        // serpApiParams.tbs = 'qdr:m'; // Comment out to get more results
         
-        // Remove exact phrase matching to get more results
-        // serpApiParams.as_epq = searchQuery; // Too restrictive
-        // serpApiParams.as_oq = 'event conference summit meeting'; // Related terms
+        
+        
+        
+        
+        
       }
 
       console.log('SerpAPI request params:', { ...serpApiParams, api_key: '[HIDDEN]' });
 
-      // Make initial request to SerpAPI
+      
       let response = await axios.get('https://serpapi.com/search', {
         params: serpApiParams,
-        timeout: 30000 // 30 second timeout
+        timeout: 30000 
       });
 
       let serpApiData = response.data;
       let allResults = [...(serpApiData.organic_results || [])];
 
-      // Fetch additional pages if available (up to 5 pages total = ~50 results)
+      
       const maxPages = 5;
       let currentPage = 1;
       
-      // Fetch additional pages if available (up to 5 pages total = ~50 results)
+      
       if (serpApiData.serpapi_pagination && serpApiData.serpapi_pagination.next_link) {
         
         while (currentPage < maxPages && serpApiData.serpapi_pagination && serpApiData.serpapi_pagination.next_link) {
           try {
-            // Extract the next page URL from SerpAPI response
+            
             const nextUrl = serpApiData.serpapi_pagination.next_link;
             
-            // Add API key to the next URL since SerpAPI doesn't include it in pagination links
+            
             const nextUrlWithKey = `${nextUrl}&api_key=${serpApiKey}`;
             
-            // Make request to next page
+            
             const nextResponse = await axios.get(nextUrlWithKey, {
               timeout: 30000
             });
             
             const nextPageData = nextResponse.data;
             
-            // Add results from next page
+            
             if (nextPageData.organic_results && Array.isArray(nextPageData.organic_results)) {
               allResults = [...allResults, ...nextPageData.organic_results];
             }
@@ -126,40 +126,40 @@ class SerpApiController {
             serpApiData = nextPageData;
             currentPage++;
             
-            // Small delay between requests to be respectful to SerpAPI
+            
             await new Promise(resolve => setTimeout(resolve, 1000));
             
           } catch (pageError) {
-            // Stop fetching more pages if there's an error
+            
             break;
           }
         }
       }
 
-      // Replace the original results with all collected results
+      
       serpApiData.organic_results = allResults;
       serpApiData.total_results = allResults.length;
       
-      // Pagination completed successfully
+      
 
-      // Process and format the results with image fetching
+      
       let formattedEvents = [];
       
       if (serpApiData.organic_results && Array.isArray(serpApiData.organic_results)) {
-        // Process events with image fetching (limit to first 20 for performance)
+        
         const eventsToProcess = serpApiData.organic_results.slice(0, 20);
         
         formattedEvents = await Promise.all(eventsToProcess.map(async (result, index) => {
-          // Extract organizer information from the display link
+          
           const organizer = SerpApiController.extractOrganizerFromUrl(result.link || result.displayed_link || '');
           
-          // Extract date information from snippet or title
+          
           const extractedDate = SerpApiController.extractDateFromText(result.snippet || result.title || '');
           
-          // Extract location information from snippet
+          
           const extractedLocation = SerpApiController.extractLocationFromText(result.snippet || '');
           
-          // Extract basic enhanced details (simplified approach)
+          
           const enhancedDetails = {
             eventType: SerpApiController.detectEventType(result.title || result.snippet || ''),
             eventCategory: SerpApiController.extractEventCategory(`${result.title || ''} ${result.snippet || ''}`.toLowerCase()),
@@ -174,7 +174,7 @@ class SerpApiController {
             tags: SerpApiController.extractEventTags(`${result.title || ''} ${result.snippet || ''}`.toLowerCase())
           };
           
-          // Fetch event-specific image
+          
           let eventImage = null;
           if (result.title) {
             eventImage = await SerpApiController.fetchEventImage(result.title, result.link, serpApiKey);
@@ -188,13 +188,13 @@ class SerpApiController {
             source: 'SerpAPI',
             position: result.position || index + 1,
             
-            // Basic Information
+            
             date: result.date || extractedDate || null,
             location: extractedLocation || null,
             organizer: organizer || null,
             contactInfo: SerpApiController.extractContactInfo(result.snippet || result.title || ''),
             
-            // Enhanced Event Details
+            
             eventDetails: enhancedDetails,
             
             scrapedAt: new Date().toISOString(),
@@ -213,14 +213,14 @@ class SerpApiController {
           };
         }));
         
-        // Add remaining events without image fetching for performance
+        
         if (serpApiData.organic_results.length > 20) {
           const remainingEvents = serpApiData.organic_results.slice(20).map((result, index) => {
             const organizer = SerpApiController.extractOrganizerFromUrl(result.link || result.displayed_link || '');
             const extractedDate = SerpApiController.extractDateFromText(result.snippet || result.title || '');
             const extractedLocation = SerpApiController.extractLocationFromText(result.snippet || '');
             
-            // Extract basic enhanced details for remaining events too
+            
             const enhancedDetails = {
               eventType: SerpApiController.detectEventType(result.title || result.snippet || ''),
               eventCategory: SerpApiController.extractEventCategory(`${result.title || ''} ${result.snippet || ''}`.toLowerCase()),
@@ -243,13 +243,13 @@ class SerpApiController {
               source: 'SerpAPI',
               position: result.position || index + 21,
               
-              // Basic Information
+              
               date: result.date || extractedDate || null,
               location: extractedLocation || null,
               organizer: organizer || null,
               contactInfo: SerpApiController.extractContactInfo(result.snippet || result.title || ''),
               
-              // Enhanced Event Details
+              
               eventDetails: enhancedDetails,
               
               scrapedAt: new Date().toISOString(),
@@ -267,10 +267,10 @@ class SerpApiController {
         }
       }
 
-      // Handle different result types based on search engine
+      
       if (engine === 'google_events' && serpApiData.events_results) {
         formattedEvents = serpApiData.events_results.map((event, index) => {
-          // Extract contact information from event description
+          
           const contactInfo = SerpApiController.extractContactInfo(event.description || event.title || '');
           
           return {
@@ -279,7 +279,7 @@ class SerpApiController {
             description: event.description || 'No description available',
             date: event.date || null,
             location: event.address || null,
-            organizer: event.venue || null, // Venue often contains organizer info
+            organizer: event.venue || null, 
             contactInfo: contactInfo,
             url: event.link || '',
             source: 'SerpAPI Google Events',
@@ -323,7 +323,7 @@ class SerpApiController {
     } catch (error) {
       console.error('SerpAPI search error:', error);
 
-      // Handle specific SerpAPI errors
+      
       if (error.response) {
         const statusCode = error.response.status;
         const errorMessage = error.response.data?.error || error.message;
@@ -359,7 +359,7 @@ class SerpApiController {
         });
       }
 
-      // Handle network/timeout errors
+      
       if (error.code === 'ECONNABORTED') {
         return res.status(408).json({
           success: false,
@@ -368,7 +368,7 @@ class SerpApiController {
         });
       }
 
-      // Generic error handling
+      
       res.status(500).json({
         success: false,
         message: 'Internal server error',
@@ -407,7 +407,7 @@ class SerpApiController {
 
       console.log(`🔍 Getting detailed info for: ${eventTitle || eventUrl}`);
 
-      // Search for detailed information about the event
+      
       const searchQuery = eventTitle || eventUrl;
       const serpApiParams = {
         q: `${searchQuery} contact email phone organizer`,
@@ -426,7 +426,7 @@ class SerpApiController {
       const serpApiData = response.data;
       let contactInfo = { email: null, phone: null, website: null };
 
-      // Extract contact info from all results
+      
       if (serpApiData.organic_results && Array.isArray(serpApiData.organic_results)) {
         for (const result of serpApiData.organic_results) {
           const extractedContact = SerpApiController.extractContactInfo(
@@ -502,10 +502,10 @@ class SerpApiController {
       const serpApiParams = {
         q: query,
         location: location,
-        num: Math.min(parseInt(num) || 10, 20), // Limit images to 20
+        num: Math.min(parseInt(num) || 10, 20), 
         api_key: serpApiKey,
         engine: 'google',
-        tbm: 'isch', // Image search
+        tbm: 'isch', 
         hl: 'en',
         gl: 'us'
       };
@@ -559,7 +559,7 @@ class SerpApiController {
         query,
         num = 10,
         location = 'United States',
-        time_period = 'm' // past month
+        time_period = 'm' 
       } = req.body;
 
       if (!query) {
@@ -592,8 +592,8 @@ class SerpApiController {
         num: Math.min(parseInt(num) || 10, 100),
         api_key: serpApiKey,
         engine: 'google',
-        tbm: 'nws', // News search
-        tbs: `qdr:${time_period}`, // Time period
+        tbm: 'nws', 
+        tbs: `qdr:${time_period}`, 
         hl: 'en',
         gl: 'us'
       };
@@ -657,12 +657,12 @@ class SerpApiController {
       const urlObj = new URL(url);
       const hostname = urlObj.hostname.toLowerCase();
       
-      // Remove common prefixes
+      
       const cleanHostname = hostname
         .replace(/^www\./, '')
         .replace(/\.(com|org|net|edu|gov|co\.uk|de|fr|ca)$/, '');
       
-      // Format as organizer name
+      
       return cleanHostname
         .split('.')
         .map(part => part.charAt(0).toUpperCase() + part.slice(1))
@@ -678,10 +678,10 @@ class SerpApiController {
   static extractDateFromText(text) {
     if (!text) return null;
     
-    // Common date patterns
+    
     const datePatterns = [
-      /(\d{1,2}\/\d{1,2}\/\d{4})/g, // MM/DD/YYYY
-      /(\d{4}-\d{2}-\d{2})/g, // YYYY-MM-DD
+      /(\d{1,2}\/\d{1,2}\/\d{4})/g, 
+      /(\d{4}-\d{2}-\d{2})/g, 
       /(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}/gi,
       /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2},?\s+\d{4}/gi,
       /(\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4})/gi
@@ -703,12 +703,12 @@ class SerpApiController {
   static extractLocationFromText(text) {
     if (!text) return null;
     
-    // Common location patterns
+    
     const locationPatterns = [
       /in\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/g,
       /at\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/g,
-      /([A-Z][a-z]+,\s*[A-Z]{2})/g, // City, State
-      /([A-Z][a-z]+,\s*[A-Z][a-z]+)/g, // City, Country
+      /([A-Z][a-z]+,\s*[A-Z]{2})/g, 
+      /([A-Z][a-z]+,\s*[A-Z][a-z]+)/g, 
       /(Virtual|Online|Remote)/gi
     ];
     
@@ -768,42 +768,42 @@ class SerpApiController {
       website: null
     };
 
-    // Extract email addresses
+    
     const emailPattern = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
     const emails = text.match(emailPattern);
     if (emails && emails.length > 0) {
-      contactInfo.email = emails[0]; // Take the first email found
+      contactInfo.email = emails[0]; 
     }
 
-    // Extract phone numbers (various formats)
+    
     const phonePatterns = [
-      /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/g, // 123-456-7890, 123.456.7890, 1234567890
-      /\b\(\d{3}\)\s*\d{3}[-.]?\d{4}\b/g, // (123) 456-7890, (123)456-7890
-      /\b\d{3}\s+\d{3}\s+\d{4}\b/g, // 123 456 7890
-      /\+\d{1,3}\s*\d{3}[-.]?\d{3}[-.]?\d{4}\b/g, // +1 123-456-7890
-      /\b\d{3}[-.]?\d{4}[-.]?\d{4}\b/g // International format
+      /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/g, 
+      /\b\(\d{3}\)\s*\d{3}[-.]?\d{4}\b/g, 
+      /\b\d{3}\s+\d{3}\s+\d{4}\b/g, 
+      /\+\d{1,3}\s*\d{3}[-.]?\d{3}[-.]?\d{4}\b/g, 
+      /\b\d{3}[-.]?\d{4}[-.]?\d{4}\b/g 
     ];
 
     for (const pattern of phonePatterns) {
       const phones = text.match(pattern);
       if (phones && phones.length > 0) {
-        contactInfo.phone = phones[0]; // Take the first phone found
+        contactInfo.phone = phones[0]; 
         break;
       }
     }
 
-    // Extract website URLs
+    
     const websitePattern = /\b(?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?\b/g;
     const websites = text.match(websitePattern);
     if (websites && websites.length > 0) {
-      // Filter out common non-contact websites
+      
       const filteredWebsites = websites.filter(site => 
         !site.includes('google.com') && 
         !site.includes('facebook.com') && 
         !site.includes('twitter.com') &&
         !site.includes('linkedin.com') &&
         !site.includes('youtube.com') &&
-        site.length > 10 // Basic length filter
+        site.length > 10 
       );
       
       if (filteredWebsites.length > 0) {
@@ -819,15 +819,15 @@ class SerpApiController {
    */
   static async fetchEventImage(eventTitle, eventUrl, serpApiKey) {
     try {
-      // Create a specific search query for this event
+      
       const imageQuery = `${eventTitle} conference event logo banner`;
       
       const imageParams = {
         q: imageQuery,
-        num: 5, // Get top 5 images
+        num: 5, 
         api_key: serpApiKey,
         engine: 'google',
-        tbm: 'isch', // Image search
+        tbm: 'isch', 
         safe: 'active',
         hl: 'en',
         gl: 'us'
@@ -835,13 +835,13 @@ class SerpApiController {
 
       const response = await axios.get('https://serpapi.com/search', {
         params: imageParams,
-        timeout: 10000 // 10 second timeout for image search
+        timeout: 10000 
       });
 
       const imageData = response.data;
       
       if (imageData.images_results && imageData.images_results.length > 0) {
-        // Return the first (most relevant) image
+        
         const bestImage = imageData.images_results[0];
         return {
           thumbnail: bestImage.thumbnail,
@@ -865,16 +865,16 @@ class SerpApiController {
     const fullText = `${title || ''} ${snippet || ''}`.toLowerCase();
     
     return {
-      // Event Type Detection
+      
       eventType: SerpApiController.detectEventType(title || snippet || ''),
       eventCategory: SerpApiController.extractEventCategory(fullText),
       
-      // Date and Time Information
+      
       date: SerpApiController.extractDateFromText(snippet || title || ''),
       duration: SerpApiController.extractEventDuration(fullText),
       timezone: SerpApiController.extractTimezone(fullText),
       
-      // Location Information
+      
       location: SerpApiController.extractLocationFromText(snippet || ''),
       venue: SerpApiController.extractVenueDetails(fullText),
       address: SerpApiController.extractAddress(fullText),
@@ -882,45 +882,45 @@ class SerpApiController {
       country: SerpApiController.extractCountry(fullText),
       isVirtual: SerpApiController.isVirtualEvent(fullText),
       
-      // Pricing Information
+      
       pricing: SerpApiController.extractPricingInfo(fullText),
       isFree: SerpApiController.isFreeEvent(fullText),
       
-      // Registration Information
+      
       registrationRequired: SerpApiController.requiresRegistration(fullText),
       registrationDeadline: SerpApiController.extractRegistrationDeadline(fullText),
       capacity: SerpApiController.extractEventCapacity(fullText),
       
-      // Event Content
+      
       topics: SerpApiController.extractEventTopics(fullText),
       targetAudience: SerpApiController.extractTargetAudience(fullText),
       speakers: SerpApiController.extractSpeakerInfo(fullText),
       agenda: SerpApiController.extractAgendaInfo(fullText),
       
-      // Contact and Organization
+      
       organizer: SerpApiController.extractOrganizerFromUrl(url || ''),
       contactInfo: SerpApiController.extractContactInfo(snippet || title || ''),
       website: SerpApiController.extractMainWebsite(url || snippet || ''),
       
-      // Technical Details
+      
       format: SerpApiController.extractEventFormat(fullText),
       language: SerpApiController.extractEventLanguage(fullText),
       cpdCredits: SerpApiController.extractCPDCredits(fullText),
       
-      // Social and Networking
+      
       networkingOpportunities: SerpApiController.hasNetworking(fullText),
       socialMedia: SerpApiController.extractSocialMedia(fullText),
       
-      // Additional Features
+      
       hasExhibition: SerpApiController.hasExhibition(fullText),
       hasWorkshops: SerpApiController.hasWorkshops(fullText),
       hasKeynotes: SerpApiController.hasKeynotes(fullText),
       hasPanelDiscussion: SerpApiController.hasPanelDiscussion(fullText),
       
-      // Accessibility
+      
       accessibility: SerpApiController.extractAccessibilityInfo(fullText),
       
-      // Tags and Keywords
+      
       tags: SerpApiController.extractEventTags(fullText),
       keywords: SerpApiController.extractKeywords(fullText)
     };
@@ -1022,8 +1022,8 @@ class SerpApiController {
   static extractCity(text) {
     const cityPatterns = [
       /in\s+([A-Za-z\s]+?)(?:,|$|\s|\.)/gi,
-      /([A-Za-z\s]+?),\s*[A-Z]{2}/gi, // City, State format
-      /([A-Za-z\s]+?),\s*[A-Za-z\s]+/gi // City, Country format
+      /([A-Za-z\s]+?),\s*[A-Z]{2}/gi, 
+      /([A-Za-z\s]+?),\s*[A-Za-z\s]+/gi 
     ];
     
     for (const pattern of cityPatterns) {
@@ -1080,7 +1080,7 @@ class SerpApiController {
           }
         }
       } catch (error) {
-        // Skip this pattern if there's an error
+        
         continue;
       }
     }
@@ -1280,7 +1280,7 @@ class SerpApiController {
         return lang;
       }
     }
-    return 'english'; // Default assumption
+    return 'english'; 
   }
 
   /**
@@ -1317,8 +1317,8 @@ class SerpApiController {
     if (!text) return null;
     
     const socialPatterns = [
-      /@([A-Za-z0-9_]+)/g, // Twitter handles
-      /#([A-Za-z0-9_]+)/g, // Hashtags
+      /@([A-Za-z0-9_]+)/g, 
+      /#([A-Za-z0-9_]+)/g, 
       /(?:follow|connect)[:\s]+@([A-Za-z0-9_]+)/g
     ];
     
@@ -1385,24 +1385,24 @@ class SerpApiController {
     
     const tags = [];
     
-    // Add event type as tag
+    
     const eventType = SerpApiController.detectEventType(text);
     if (eventType) tags.push(eventType);
     
-    // Add category as tag
+    
     const category = SerpApiController.extractEventCategory(text);
     if (category && category !== 'General') tags.push(category);
     
-    // Add format as tag
+    
     const format = SerpApiController.extractEventFormat(text);
     if (format && format !== 'event') tags.push(format);
     
-    // Add virtual tag if applicable
+    
     if (SerpApiController.isVirtualEvent(text)) {
       tags.push('Virtual');
     }
     
-    // Add free tag if applicable
+    
     if (SerpApiController.isFreeEvent(text)) {
       tags.push('Free');
     }
@@ -1421,7 +1421,7 @@ class SerpApiController {
       word.length > 4 && 
       !['this', 'that', 'with', 'from', 'they', 'been', 'have', 'were', 'said', 'each', 'which', 'their', 'time', 'will', 'about', 'would', 'there', 'could', 'other', 'after', 'first', 'well', 'also', 'new', 'want', 'because', 'any', 'these', 'give', 'day', 'most', 'us', 'is', 'are', 'was', 'be', 'or', 'an', 'as', 'at', 'by', 'for', 'in', 'of', 'on', 'to', 'up', 'and', 'the'].includes(word.toLowerCase())
     );
-    return keywords.slice(0, 10); // Return top 10 keywords
+    return keywords.slice(0, 10); 
   }
 }
 

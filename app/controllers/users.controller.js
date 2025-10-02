@@ -34,14 +34,11 @@ class UsersController {
     try {
       const userId = req.user.id;
       const updateData = req.body;
-
-    
       delete updateData.password;
       delete updateData.email;
       delete updateData.id;
       delete updateData.createdAt;
       delete updateData.updatedAt;
-
       const user = await UserModel.update(userId, updateData);
 
       res.json({
@@ -78,7 +75,6 @@ class UsersController {
         });
       }
 
-    
       const user = await UserModel.findById(userId);
       if (!user) {
         return res.status(404).json({
@@ -87,7 +83,6 @@ class UsersController {
         });
       }
 
-    
       const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
       if (!isCurrentPasswordValid) {
         return res.status(400).json({
@@ -99,7 +94,6 @@ class UsersController {
     
       const hashedNewPassword = await bcrypt.hash(newPassword, 12);
 
-    
       await UserModel.update(userId, { password: hashedNewPassword });
 
       res.json({
@@ -228,8 +222,7 @@ class UsersController {
       });
     }
   }
-
-
+  
   static async searchUsers(req, res) {
     try {
       const { page = 1, limit = 10, search = '' } = req.query;

@@ -1,7 +1,7 @@
 const PaymentHistoryModel = require('../models/paymenthistory.model');
 
 class PaymentHistoryController {
-  // Get payment history
+  
   static async getPaymentHistory(req, res) {
     try {
       const { page = 1, limit = 10, ...filters } = req.query;
@@ -26,7 +26,7 @@ class PaymentHistoryController {
     }
   }
 
-  // Get payment by ID
+  
   static async getPaymentById(req, res) {
     try {
       const { id } = req.params;
@@ -39,7 +39,7 @@ class PaymentHistoryController {
         });
       }
 
-      // Check if user owns this payment
+      
       if (payment.userId !== req.user.id) {
         return res.status(403).json({
           success: false,
@@ -60,7 +60,7 @@ class PaymentHistoryController {
     }
   }
 
-  // Get payment statistics
+  
   static async getPaymentStats(req, res) {
     try {
       const userId = req.user.id;
@@ -85,7 +85,7 @@ class PaymentHistoryController {
     }
   }
 
-  // Create payment record (for webhook or manual creation)
+  
   static async createPayment(req, res) {
     try {
       const paymentData = {
@@ -109,7 +109,7 @@ class PaymentHistoryController {
     }
   }
 
-  // Update payment status
+  
   static async updatePaymentStatus(req, res) {
     try {
       const { id } = req.params;
@@ -123,7 +123,7 @@ class PaymentHistoryController {
         });
       }
 
-      // Check if user owns this payment
+      
       if (payment.userId !== req.user.id) {
         return res.status(403).json({
           success: false,
@@ -151,7 +151,7 @@ class PaymentHistoryController {
     }
   }
 
-  // Get all payments (admin only)
+  
   static async getAllPayments(req, res) {
     try {
       const { page = 1, limit = 10, ...filters } = req.query;
@@ -175,7 +175,7 @@ class PaymentHistoryController {
     }
   }
 
-  // Get recent payments (admin only)
+  
   static async getRecentPayments(req, res) {
     try {
       const { limit = 10 } = req.query;
@@ -194,13 +194,13 @@ class PaymentHistoryController {
     }
   }
 
-  // Get payment statistics (admin only)
+  
   static async getAdminPaymentStats(req, res) {
     try {
       const { startDate, endDate } = req.query;
 
       const stats = await PaymentHistoryModel.getStats(
-        null, // No user filter for admin stats
+        null, 
         startDate,
         endDate
       );
